@@ -1,4 +1,7 @@
-import type { ScanResult } from '@wreckcheck/core';
+import type {
+  Policy,
+  ScanResult,
+} from '@wreckcheck/core';
 
 import {
   calculateScore,
@@ -7,6 +10,7 @@ import {
 
 export function renderJson(
   result: ScanResult,
+  policy: Policy,
 ): string {
   const score = calculateScore(result.findings);
   const riskLevel = getRiskLevel(
@@ -16,6 +20,7 @@ export function renderJson(
   return JSON.stringify(
     {
       project: result.project,
+      policy,
       score,
       riskLevel,
       findings: result.findings,

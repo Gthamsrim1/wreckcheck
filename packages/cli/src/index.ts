@@ -3,7 +3,7 @@
 import path from 'node:path';
 import { Command } from 'commander';
 
-import { scan, getRiskLevel } from '@wreckcheck/core';
+import { scan, loadPolicy, shouldFail } from '@wreckcheck/core';
 import { checks } from '@wreckcheck/checks';
 import {
   renderJson,
@@ -35,21 +35,21 @@ program
       },
     );
 
-    const output = options.ci
-      ? renderJson(result)
-      : renderTerminal(result);
-
-    console.log(output);
-
     if (options.ci) {
-      const riskLevel = getRiskLevel(
-        result.findings,
+      const policy = await loadPolicy(rootDir);
+
+      console.log(
+        renderJson(result, policy),
       );
 
-      if (riskLevel === 'blocked') {
+      if (shouldFail(result.findings, policy)) {
         process.exitCode = 1;
       }
+
+      return;
     }
+
+    console.log(renderTerminal(result));
   });
 
 await program.parseAsync();
