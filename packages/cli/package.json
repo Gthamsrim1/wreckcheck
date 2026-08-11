@@ -1,20 +1,20 @@
 {
-  "name": "@wreckcheck/cli",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "bin": {
-    "wreckcheck": "./dist/index.js"
-  },
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@wreckcheck/checks": "workspace:*",
-    "@wreckcheck/core": "workspace:*",
-    "@wreckcheck/reporter": "workspace:*",
-    "commander": "^14.0.3"
-  }
+	"name": "@wreckcheck/cli",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"bin": {
+		"wreckcheck": "./dist/index.js"
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsx src/index.ts",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@wreckcheck/checks": "workspace:*",
+		"@wreckcheck/core": "workspace:*",
+		"@wreckcheck/reporter": "workspace:*",
+		"commander": "^14.0.3"
+	}
 }

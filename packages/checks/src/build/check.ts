@@ -1,69 +1,61 @@
-import type {
-  Check,
-  Finding,
-} from '@wreckcheck/core';
-
+import type { Check, Finding } from '@wreckcheck/core';
+import { findingIds } from '@wreckcheck/core';
 import { readPackageJson } from './package-json.js';
 
 export const buildCheck: Check = {
-  id: 'build',
-  name: 'Build configuration',
-  category: 'build',
+	id: 'build',
+	name: 'Build configuration',
+	category: 'build',
 
-  async run(context): Promise<Finding[]> {
-    const packageJson = await readPackageJson(
-      context.rootDir,
-    );
+	async run(context): Promise<Finding[]> {
+		const packageJson = await readPackageJson(context.rootDir);
 
-    if (!packageJson) {
-      return [];
-    }
+		if (!packageJson) {
+			return [];
+		}
 
-    const scripts = packageJson.scripts ?? {};
-    const findings: Finding[] = [];
+		const scripts = packageJson.scripts ?? {};
+		const findings: Finding[] = [];
 
-    if (!scripts.build) {
-      findings.push({
-        id: 'build-missing-build-script',
-        severity: 'medium',
-        category: 'build',
-        title: 'No build script configured',
-        description:
-          'package.json does not define a build script.',
-        file: 'package.json',
-        recommendation:
-          'Add a build script that produces the application artifact used for deployment.',
-      });
-    }
+		if (!scripts.build) {
+			findings.push({
+				id: findingIds.missingBuildScript,
+				severity: 'medium',
+				category: 'build',
+				title: 'No build script configured',
+				description: 'package.json does not define a build script.',
+				file: 'package.json',
+				recommendation:
+					'Add a build script that produces the application artifact used for deployment.',
+			});
+		}
 
-    if (!scripts.test) {
-      findings.push({
-        id: 'build-missing-test-script',
-        severity: 'medium',
-        category: 'build',
-        title: 'No test script configured',
-        description:
-          'package.json does not define a test script.',
-        file: 'package.json',
-        recommendation:
-          'Add a test script so automated checks can verify the project before release.',
-      });
-    }
+		if (!scripts.test) {
+			findings.push({
+				id: findingIds.missingTestScript,
+				severity: 'medium',
+				category: 'build',
+				title: 'No test script configured',
+				description: 'package.json does not define a test script.',
+				file: 'package.json',
+				recommendation:
+					'Add a test script so automated checks can verify the project before release.',
+			});
+		}
 
-    if (!scripts.lint) {
-      findings.push({
-        id: 'build-missing-lint-script',
-        severity: 'low',
-        category: 'build',
-        title: 'No lint script configured',
-        description:
-          'package.json does not define a lint script.',
-        file: 'package.json',
-        recommendation:
-          'Add a lint script to catch code-quality and correctness issues before release.',
-      });
-    }
+		if (!scripts.lint) {
+			findings.push({
+				id: findingIds.missingLintScript,
+				severity: 'low',
+				category: 'build',
+				title: 'No lint script configured',
+				description: 'package.json does not define a lint script.',
+				file: 'package.json',
+				recommendation:
+					'Add a lint script to catch code-quality and correctness issues before release.',
+			});
+		}
 
-    return findings;
-  },
+		return findings;
+	},
 };

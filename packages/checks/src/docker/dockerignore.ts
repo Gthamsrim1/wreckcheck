@@ -2,28 +2,25 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 export async function readDockerignore(
-  rootDir: string,
+	rootDir: string,
 ): Promise<Set<string> | undefined> {
-  try {
-    const content = await readFile(
-      join(rootDir, '.dockerignore'),
-      'utf8',
-    );
+	try {
+		const content = await readFile(join(rootDir, '.dockerignore'), 'utf8');
 
-    const patterns = new Set<string>();
+		const patterns = new Set<string>();
 
-    for (const line of content.split(/\r?\n/)) {
-      const trimmed = line.trim();
+		for (const line of content.split(/\r?\n/)) {
+			const trimmed = line.trim();
 
-      if (!trimmed || trimmed.startsWith('#')) {
-        continue;
-      }
+			if (!trimmed || trimmed.startsWith('#')) {
+				continue;
+			}
 
-      patterns.add(trimmed);
-    }
+			patterns.add(trimmed);
+		}
 
-    return patterns;
-  } catch {
-    return undefined;
-  }
+		return patterns;
+	} catch {
+		return undefined;
+	}
 }

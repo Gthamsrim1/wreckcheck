@@ -1,54 +1,49 @@
 import type { Finding } from '@wreckcheck/core';
-
+import { findingIds } from '@wreckcheck/core';
 import type { DockerRule } from './types.js';
 
-export const dockerBaseImageRule: DockerRule = ({
-  instructions,
-}) => {
-  const findings: Finding[] = [];
+export const dockerBaseImageRule: DockerRule = ({ instructions }) => {
+	const findings: Finding[] = [];
 
-  for (const instruction of instructions) {
-    if (instruction.instruction !== 'FROM') {
-      continue;
-    }
+	for (const instruction of instructions) {
+		if (instruction.instruction !== 'FROM') {
+			continue;
+		}
 
-    const image = instruction.value
-      .split(/\s+/)[0]
-      ?.trim();
+		const image = instruction.value.split(/\s+/)[0]?.trim();
 
-    if (!image || image.includes('@sha256:')) {
-      continue;
-    }
+		if (!image || image.includes('@sha256:')) {
+			continue;
+		}
 
-    const imageName = image.split('/').pop() ?? image;
+		const imageName = image.split('/').pop() ?? image;
 
-    const tag = imageName.includes(':')
-      ? imageName.split(':').pop()
-      : undefined;
+		const tag = imageName.includes(':')
+			? imageName.split(':').pop()
+			: undefined;
 
-    const isFloating =
-      tag === undefined ||
-      tag === 'latest' ||
-      /^\d+$/.test(tag) ||
-      /^\d+\.\d+$/.test(tag);
+		const isFloating =
+			tag === undefined ||
+			tag === 'latest' ||
+			/^\d+$/.test(tag) ||
+			/^\d+\.\d+$/.test(tag);
 
-    if (!isFloating) {
-      continue;
-    }
+		if (!isFloating) {
+			continue;
+		}
 
-    findings.push({
-      id: `docker-floating-base-${instruction.line}`,
-      severity: 'medium',
-      category: 'docker',
-      title: 'Floating Docker base image',
-      description:
-        `${image} does not pin the base image to an exact version.`,
-      file: 'Dockerfile',
-      line: instruction.line,
-      recommendation:
-        'Pin the base image to an exact version. For maximum reproducibility, pin it by digest.',
-    });
-  }
+		findings.push({
+			id: findingIds.dockerFloatingBaseImage,
+			severity: 'medium',
+			category: 'docker',
+			title: 'Floating Docker base image',
+			description: `${image} does not pin the base image to an exact version.`,
+			file: 'Dockerfile',
+			line: instruction.line,
+			recommendation:
+				'Pin the base image to an exact version. For maximum reproducibility, pin it by digest.',
+		});
+	}
 
-  return findings;
+	return findings;
 };

@@ -1,47 +1,47 @@
 export interface DockerInstruction {
-  instruction: string;
-  value: string;
-  line: number;
+	instruction: string;
+	value: string;
+	line: number;
 }
 
 export function parseDockerfile(content: string): DockerInstruction[] {
-  const instructions: DockerInstruction[] = [];
+	const instructions: DockerInstruction[] = [];
 
-  let current = '';
-  let startLine = 0;
+	let current = '';
+	let startLine = 0;
 
-  const lines = content.split(/\r?\n/);
+	const lines = content.split(/\r?\n/);
 
-  for (let index = 0; index < lines.length; index++) {
-    const line = lines[index]?.trimEnd() ?? '';
+	for (let index = 0; index < lines.length; index++) {
+		const line = lines[index]?.trimEnd() ?? '';
 
-    if (!current) {
-      startLine = index + 1;
-    }
+		if (!current) {
+			startLine = index + 1;
+		}
 
-    if (!line.trim() || line.trimStart().startsWith('#')) {
-      continue;
-    }
+		if (!line.trim() || line.trimStart().startsWith('#')) {
+			continue;
+		}
 
-    current += line.trim();
+		current += line.trim();
 
-    if (current.endsWith('\\')) {
-      current = current.slice(0, -1);
-      continue;
-    }
+		if (current.endsWith('\\')) {
+			current = current.slice(0, -1);
+			continue;
+		}
 
-    const match = current.match(/^([A-Z]+)\s+(.*)$/);
+		const match = current.match(/^([A-Z]+)\s+(.*)$/);
 
-    if (match) {
-      instructions.push({
-        instruction: match[1]!,
-        value: match[2]!,
-        line: startLine,
-      });
-    }
+		if (match) {
+			instructions.push({
+				instruction: match[1]!,
+				value: match[2]!,
+				line: startLine,
+			});
+		}
 
-    current = '';
-  }
+		current = '';
+	}
 
-  return instructions;
+	return instructions;
 }

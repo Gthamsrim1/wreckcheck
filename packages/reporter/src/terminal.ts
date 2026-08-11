@@ -1,265 +1,266 @@
+import type {
+	Finding,
+	Policy,
+	RiskLevel,
+	ScanResult,
+	Severity,
+} from '@wreckcheck/core';
+import {
+	calculateScore,
+	getActiveFindings,
+	getRiskLevel,
+} from '@wreckcheck/core';
 import pc from 'picocolors';
 
-import type {
-  Finding,
-  RiskLevel,
-  ScanResult,
-  Severity,
-} from '@wreckcheck/core';
-import { calculateScore, getRiskLevel } from '@wreckcheck/core';
-
-const severityOrder: Severity[] = [
-  'critical',
-  'high',
-  'medium',
-  'low',
-  'info',
-];
+const severityOrder: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
 
 function formatSeverity(severity: Severity): string {
-  switch (severity) {
-    case 'critical':
-      return pc.bgRed(pc.white(' CRITICAL '));
-    case 'high':
-      return pc.red('HIGH');
-    case 'medium':
-      return pc.yellow('MEDIUM');
-    case 'low':
-      return pc.cyan('LOW');
-    case 'info':
-      return pc.dim('INFO');
-  }
+	switch (severity) {
+		case 'critical':
+			return pc.bgRed(pc.white(' CRITICAL '));
+		case 'high':
+			return pc.red('HIGH');
+		case 'medium':
+			return pc.yellow('MEDIUM');
+		case 'low':
+			return pc.cyan('LOW');
+		case 'info':
+			return pc.dim('INFO');
+	}
 }
 
 function formatFinding(finding: Finding): string {
-  const location = finding.file
-    ? `${finding.file}${finding.line ? `:${finding.line}` : ''}`
-    : undefined;
+	const location = finding.file
+		? `${finding.file}${finding.line ? `:${finding.line}` : ''}`
+		: undefined;
 
-  const lines = [
-    `  ${pc.red('✖')} ${finding.title}`,
-  ];
+	const lines = [`  ${pc.red('✖')} ${finding.title}`];
 
-  if (location) {
-    lines.push(`    ${pc.dim(location)}`);
-  }
+	if (location) {
+		lines.push(`    ${pc.dim(location)}`);
+	}
 
-  lines.push('');
-  lines.push(`    ${finding.description}`);
+	lines.push('');
+	lines.push(`    ${finding.description}`);
 
-  if (finding.package) {
-    lines.push('');
+	if (finding.package) {
+		lines.push('');
 
-    lines.push(
-      `    ${pc.dim('Dependency')}  ${finding.package.direct ? 'direct' : 'transitive'}`,
-    );
+		lines.push(
+			`    ${pc.dim('Dependency')}  ${finding.package.direct ? 'direct' : 'transitive'}`,
+		);
 
-    if (finding.package.installedVersion) {
-      lines.push(
-        `    ${pc.dim('Installed')}    ${finding.package.installedVersion}`,
-      );
-    }
+		if (finding.package.installedVersion) {
+			lines.push(
+				`    ${pc.dim('Installed')}    ${finding.package.installedVersion}`,
+			);
+		}
 
-    if (finding.package.fixedVersion) {
-      lines.push(
-        `    ${pc.dim('Fixed')}        ${finding.package.fixedVersion}`,
-      );
-    }
-  }
+		if (finding.package.fixedVersion) {
+			lines.push(
+				`    ${pc.dim('Fixed')}        ${finding.package.fixedVersion}`,
+			);
+		}
+	}
 
-  if (finding.recommendation) {
-    lines.push('');
-    lines.push(`    ${pc.dim('→')} ${finding.recommendation}`);
-  }
+	if (finding.recommendation) {
+		lines.push('');
+		lines.push(`    ${pc.dim('→')} ${finding.recommendation}`);
+	}
 
-  return lines.join('\n');
+	return lines.join('\n');
 }
 
 function formatRiskLevel(riskLevel: RiskLevel): string {
-  switch (riskLevel) {
-    case 'safe':
-      return pc.green('✓ SAFE TO SHIP');
+	switch (riskLevel) {
+		case 'safe':
+			return pc.green('✓ SAFE TO SHIP');
 
-    case 'review':
-      return pc.yellow('⚠ REVIEW BEFORE SHIPPING');
+		case 'review':
+			return pc.yellow('⚠ REVIEW BEFORE SHIPPING');
 
-    case 'risky':
-      return pc.yellow('⚠ HIGH RISK');
+		case 'risky':
+			return pc.yellow('⚠ HIGH RISK');
 
-    case 'blocked':
-      return pc.red('✖ BLOCKED');
-  }
+		case 'blocked':
+			return pc.red('✖ BLOCKED');
+	}
 }
 
 function groupFindings(findings: Finding[]): Map<Severity, Finding[]> {
-  const groups = new Map<Severity, Finding[]>();
+	const groups = new Map<Severity, Finding[]>();
 
-  for (const finding of findings) {
-    const existing = groups.get(finding.severity) ?? [];
-    existing.push(finding);
-    groups.set(finding.severity, existing);
-  }
+	for (const finding of findings) {
+		const existing = groups.get(finding.severity) ?? [];
+		existing.push(finding);
+		groups.set(finding.severity, existing);
+	}
 
-  return groups;
+	return groups;
 }
 
 function formatScore(score: number): string {
-  if (score >= 90) {
-    return pc.green(`${score} / 100`);
-  }
+	if (score >= 90) {
+		return pc.green(`${score} / 100`);
+	}
 
-  if (score >= 70) {
-    return pc.yellow(`${score} / 100`);
-  }
+	if (score >= 70) {
+		return pc.yellow(`${score} / 100`);
+	}
 
-  return pc.red(`${score} / 100`);
+	return pc.red(`${score} / 100`);
 }
 
-export function renderTerminal(result: ScanResult): string {
-  const { project, findings, duration, verification } = result;
-  const score = calculateScore(findings);
-  const riskLevel = getRiskLevel(findings);
-  const groups = groupFindings(findings);
+export function renderTerminal(result: ScanResult, policy?: Policy): string {
+	const { project, findings, duration, verification } = result;
 
-  const output: string[] = [];
+	const activeFindings = policy
+		? getActiveFindings(findings, policy)
+		: findings;
 
-  output.push('');
-  output.push(pc.bold('  WRECKCHECK'));
-  output.push(pc.dim('  Find what will wreck your release.'));
-  output.push('');
+	const ignoredFindings = policy
+		? findings.filter((finding) => policy.ignore.includes(finding.id))
+		: [];
 
-  output.push(pc.bold('  PROJECT'));
-  output.push(
-    pc.dim('  ────────────────────────────────────────────'),
-  );
-  output.push(`  ${project.rootDir}`);
-  output.push(`  Language       ${project.language}`);
-  output.push(
-    `  Framework      ${project.framework ?? 'Unknown'}`,
-  );
-  output.push(
-    `  Package        ${project.packageManager ?? 'Unknown'}`,
-  );
-  output.push(
-    `  Docker         ${
-      project.hasDocker ? pc.green('✓') : pc.dim('✗')
-    }`,
-  );
-  output.push(
-    `  Git            ${
-      project.hasGit ? pc.green('✓') : pc.dim('✗')
-    }`,
-  );
-  output.push('');
+	const score = calculateScore(activeFindings);
+	const riskLevel = getRiskLevel(activeFindings);
+	const groups = groupFindings(activeFindings);
 
-  output.push(pc.bold('  SHIP READINESS'));
-  output.push('');
-  output.push(`             ${pc.bold(formatScore(score))}`);
-  output.push('');
-  output.push(`             ${formatRiskLevel(riskLevel)}`);
-  output.push('');
+	const output: string[] = [];
 
-  if (findings.length === 0) {
-    output.push(pc.green('  ✓ No issues found'));
-  } else {
-    output.push(
-      `  ${pc.yellow('⚠')} ${findings.length} issue${
-        findings.length === 1 ? '' : 's'
-      } found`,
-    );
-    output.push('');
+	output.push('');
+	output.push(pc.bold('  WRECKCHECK'));
+	output.push(pc.dim('  Find what will wreck your release.'));
+	output.push('');
 
-    for (const severity of severityOrder) {
-      const severityFindings = groups.get(severity);
+	output.push(pc.bold('  PROJECT'));
+	output.push(pc.dim('  ────────────────────────────────────────────'));
+	output.push(`  ${project.rootDir}`);
+	output.push(`  Language       ${project.language}`);
+	output.push(`  Framework      ${project.framework ?? 'Unknown'}`);
+	output.push(`  Package        ${project.packageManager ?? 'Unknown'}`);
+	output.push(
+		`  Docker         ${project.hasDocker ? pc.green('✓') : pc.dim('✗')}`,
+	);
+	output.push(
+		`  Git            ${project.hasGit ? pc.green('✓') : pc.dim('✗')}`,
+	);
+	output.push('');
 
-      if (!severityFindings?.length) {
-        continue;
-      }
+	output.push(pc.bold('  SHIP READINESS'));
+	output.push('');
+	output.push(`             ${pc.bold(formatScore(score))}`);
+	output.push('');
+	output.push(`             ${formatRiskLevel(riskLevel)}`);
+	output.push('');
 
-      output.push(`  ${formatSeverity(severity)}`);
-      output.push('');
+	if (activeFindings.length === 0) {
+		output.push(pc.green('  ✓ No active issues found'));
+	} else {
+		output.push(
+			`  ${pc.yellow('⚠')} ${activeFindings.length} active issue${
+				activeFindings.length === 1 ? '' : 's'
+			}${
+				ignoredFindings.length
+					? pc.dim(` · ${ignoredFindings.length} ignored`)
+					: ''
+			}`,
+		);
+		output.push('');
 
-      for (const finding of severityFindings) {
-        output.push(formatFinding(finding));
-        output.push('');
-      }
-    }
-  }
+		for (const severity of severityOrder) {
+			const severityFindings = groups.get(severity);
 
-  if (verification?.length) {
-    output.push('');
-    output.push(pc.bold('  VERIFICATION'));
-    output.push(
-      pc.dim(
-        '  ────────────────────────────────────────────',
-      ),
-    );
-    output.push('');
+			if (!severityFindings?.length) {
+				continue;
+			}
 
-    for (const check of verification) {
-      switch (check.status) {
-        case 'passed':
-          output.push(
-            `  ${pc.green('✓')} ${check.command} ${pc.dim(
-              `${Math.round(check.duration)}ms`,
-            )}`,
-          );
-          break;
+			output.push(`  ${formatSeverity(severity)}`);
+			output.push('');
 
-        case 'failed':
-          output.push(
-            `  ${pc.red('✖')} ${check.command} ${pc.dim(
-              `${Math.round(check.duration)}ms`,
-            )}`,
-          );
+			for (const finding of severityFindings) {
+				output.push(formatFinding(finding));
+				output.push('');
+			}
+		}
+	}
 
-          if (check.output) {
-            output.push('');
+	if (ignoredFindings.length > 0) {
+		output.push('');
+		output.push(pc.bold('  IGNORED'));
+		output.push(pc.dim('  ────────────────────────────────────────────'));
+		output.push('');
 
-            output.push(
-              check.output
-                .trim()
-                .split('\n')
-                .map((line: string) => `    ${line}`)
-                .join('\n'),
-            );
-          }
+		for (const finding of ignoredFindings) {
+			output.push(`  ${pc.dim('○')} ${finding.title}`);
+			output.push(`    ${pc.dim(finding.id)}`);
+			output.push(`    ${pc.dim('Ignored by .wreckcheck.yml')}`);
+			output.push('');
+		}
+	}
 
-          break;
+	if (verification?.length) {
+		output.push('');
+		output.push(pc.bold('  VERIFICATION'));
+		output.push(pc.dim('  ────────────────────────────────────────────'));
+		output.push('');
 
-        case 'skipped':
-          output.push(
-            `  ${pc.yellow('⏭')} ${check.command}`,
-          );
+		for (const check of verification) {
+			switch (check.status) {
+				case 'passed':
+					output.push(
+						`  ${pc.green('✓')} ${check.command} ${pc.dim(
+							`${Math.round(check.duration)}ms`,
+						)}`,
+					);
+					break;
 
-          if (check.reason) {
-            output.push(
-              `    ${pc.dim(check.reason)}`,
-            );
-          }
+				case 'failed':
+					output.push(
+						`  ${pc.red('✖')} ${check.command} ${pc.dim(
+							`${Math.round(check.duration)}ms`,
+						)}`,
+					);
 
-          break;
-      }
+					if (check.output) {
+						output.push('');
 
-      output.push('');
-    }
-  }
+						output.push(
+							check.output
+								.trim()
+								.split('\n')
+								.map((line: string) => `    ${line}`)
+								.join('\n'),
+						);
+					}
 
-  output.push(
-    pc.dim(
-      '  ────────────────────────────────────────────',
-    ),
-  );
+					break;
 
-  output.push(
-    pc.dim(
-      `${`  ${findings.length} issue${
-        findings.length === 1 ? '' : 's'
-      } · ${Math.round(duration)}ms`}`,
-    ),
-  );
+				case 'skipped':
+					output.push(`  ${pc.yellow('⏭')} ${check.command}`);
 
-  output.push('');
+					if (check.reason) {
+						output.push(`    ${pc.dim(check.reason)}`);
+					}
 
-  return output.join('\n');
+					break;
+			}
+
+			output.push('');
+		}
+	}
+
+	const issueSummary =
+		`${activeFindings.length} active issue${
+			activeFindings.length === 1 ? '' : 's'
+		}` +
+		(ignoredFindings.length > 0 ? ` · ${ignoredFindings.length} ignored` : '');
+
+	output.push(pc.dim('  ────────────────────────────────────────────'));
+
+	output.push(pc.dim(`  ${issueSummary} · ${Math.round(duration)}ms`));
+
+	output.push('');
+
+	return output.join('\n');
 }

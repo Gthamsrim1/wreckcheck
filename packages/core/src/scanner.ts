@@ -1,69 +1,61 @@
 import type {
-  Check,
-  Finding,
-  ProjectInfo,
-  VerificationResult,
+	Check,
+	Finding,
+	ProjectInfo,
+	VerificationResult,
 } from './checks/types.js';
 
 import { discoverProject } from './project.js';
 import { runVerification } from './verification.js';
 
 export interface ScanResult {
-  project: ProjectInfo;
-  findings: Finding[];
-  verification?: VerificationResult[];
-  duration: number;
+	project: ProjectInfo;
+	findings: Finding[];
+	verification?: VerificationResult[];
+	duration: number;
 }
 
 export interface ScanOptions {
-  verify?: boolean;
+	verify?: boolean;
 }
 
 export async function scan(
-  rootDir: string,
-  checks: Check[],
-  options: ScanOptions = {},
+	rootDir: string,
+	checks: Check[],
+	options: ScanOptions = {},
 ): Promise<ScanResult> {
-  const start = performance.now();
+	const start = performance.now();
 
-  const project = discoverProject(rootDir);
+	const project = discoverProject(rootDir);
 
-  const context = {
-    rootDir,
-    project,
-    verify: options.verify ?? false,
-  };
+	const context = {
+		rootDir,
+		project,
+		verify: options.verify ?? false,
+	};
 
-  const results = await Promise.all(
-    checks.map(async (check) => {
-      try {
-        return await check.run(context);
-      } catch (error) {
-        console.error(
-          `Check "${check.id}" failed:`,
-          error,
-        );
+	const results = await Promise.all(
+		checks.map(async (check) => {
+			try {
+				return await check.run(context);
+			} catch (error) {
+				console.error(`Check "${check.id}" failed:`, error);
 
-        return [];
-      }
-    }),
-  );
+				return [];
+			}
+		}),
+	);
 
-  const findings = results.flat();
+	const findings = results.flat();
 
-  const verification = options.verify
-    ? await runVerification(
-        rootDir,
-        project,
-      )
-    : undefined;
+	const verification = options.verify
+		? await runVerification(rootDir, project)
+		: undefined;
 
-  return {
-    project,
-    findings,
-    ...(verification
-      ? { verification }
-      : {}),
-    duration: performance.now() - start,
-  };
+	return {
+		project,
+		findings,
+		...(verification ? { verification } : {}),
+		duration: performance.now() - start,
+	};
 }

@@ -1,30 +1,37 @@
 {
-  "name": "wreckcheck",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "^11.13.1",
-      "onFail": "download"
-    }
-  },
-  "type": "module",
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@types/node": "^26.2.0",
-    "eslint": "^10.8.1",
-    "prettier": "^3.9.6",
-    "tsx": "^4.23.11",
-    "typescript": "^7.0.2",
-    "typescript-eslint": "^8.66.0",
-    "vitest": "^4.1.10"
-  }
+	"name": "wreckcheck",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo 'empty'",
+		"build": "pnpm -r build",
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"format:check": "biome format . --check",
+		"prepare": "husky"
+	},
+	"lint-staged": {
+		"*.{js,jsx,ts,tsx,json,css,md}": "biome check --write"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devEngines": {
+		"packageManager": {
+			"name": "pnpm",
+			"version": "^11.13.1",
+			"onFail": "download"
+		}
+	},
+	"type": "module",
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.7",
+		"@types/node": "^26.2.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.3.0",
+		"tsx": "^4.23.11",
+		"typescript": "^7.0.2",
+		"vitest": "^4.1.10"
+	}
 }
