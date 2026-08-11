@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { checks } from '@wreckcheck/checks';
 
-import { loadPolicy, scan, shouldFail } from '@wreckcheck/core';
-import { renderJson, renderTerminal } from '@wreckcheck/reporter';
+import { checks } from '@wreckcheck/checks';
+import { DEFAULT_POLICY, loadConfig, scan, shouldFail } from '@wreckcheck/core';
+import { renderJson, renderSarif, renderTerminal } from '@wreckcheck/reporter';
+
 import { Command } from 'commander';
 
 const program = new Command();
@@ -15,26 +17,47 @@ program
 	.argument('[directory]', 'Project directory to scan', '.')
 	.option('--verify', 'Run project build, lint, and test commands')
 	.option('--ci', 'Run in CI mode with machine-readable output')
-	.action(async (directory: string, options) => {
-		const rootDir = path.resolve(directory);
+	.option('--no-config', 'Ignore project configuration file', false)
+	.option('--config <file>', 'Use a custom configuration file')
+	.option('--sarif <file>', 'Write SARIF output')
+	.action(
+		async (
+			directory: string,
+			options: {
+				verify?: boolean;
+				ci?: boolean;
+				config?: string;
+				noConfig?: boolean;
+				sarif?: string;
+			},
+		) => {
+			const rootDir = path.resolve(directory);
 
-		const result = await scan(rootDir, checks, {
-			verify: options.verify || options.ci,
-		});
+			const config = options.noConfig
+				? { policy: DEFAULT_POLICY }
+				: await loadConfig(
+						rootDir,
+						typeof options.config === 'string' ? options.config : undefined,
+					);
 
-		const policy = await loadPolicy(rootDir);
+			const result = await scan(rootDir, checks, {
+				verify: options.verify || options.ci || false,
+			});
 
-		if (options.ci) {
-			console.log(renderJson(result, policy));
-
-			if (shouldFail(result.findings, policy)) {
-				process.exitCode = 1;
+			if (options.sarif) {
+				await writeFile(options.sarif, renderSarif(result.findings), 'utf8');
 			}
 
-			return;
-		}
+			if (options.ci) {
+				console.log(renderJson(result, config));
+				if (shouldFail(result.findings, config.policy)) {
+					process.exitCode = 1;
+				}
+				return;
+			}
 
-		console.log(renderTerminal(result, policy));
-	});
+			console.log(renderTerminal(result, config));
+		},
+	);
 
 await program.parseAsync();

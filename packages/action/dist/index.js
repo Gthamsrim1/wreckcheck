@@ -17585,12 +17585,12 @@ var require_lib = __commonJS({
             throw new Error("Client has already been disposed.");
           }
           const parsedUrl = new URL(requestUrl);
-          let info = this._prepareRequest(verb, parsedUrl, headers);
+          let info2 = this._prepareRequest(verb, parsedUrl, headers);
           const maxTries = this._allowRetries && RetryableHttpVerbs.includes(verb) ? this._maxRetries + 1 : 1;
           let numTries = 0;
           let response;
           do {
-            response = yield this.requestRaw(info, data);
+            response = yield this.requestRaw(info2, data);
             if (response && response.message && response.message.statusCode === HttpCodes.Unauthorized) {
               let authenticationHandler;
               for (const handler of this.handlers) {
@@ -17600,7 +17600,7 @@ var require_lib = __commonJS({
                 }
               }
               if (authenticationHandler) {
-                return authenticationHandler.handleAuthentication(this, info, data);
+                return authenticationHandler.handleAuthentication(this, info2, data);
               } else {
                 return response;
               }
@@ -17623,8 +17623,8 @@ var require_lib = __commonJS({
                   }
                 }
               }
-              info = this._prepareRequest(verb, parsedRedirectUrl, headers);
-              response = yield this.requestRaw(info, data);
+              info2 = this._prepareRequest(verb, parsedRedirectUrl, headers);
+              response = yield this.requestRaw(info2, data);
               redirectsRemaining--;
             }
             if (!response.message.statusCode || !HttpResponseRetryCodes.includes(response.message.statusCode)) {
@@ -17653,7 +17653,7 @@ var require_lib = __commonJS({
        * @param info
        * @param data
        */
-      requestRaw(info, data) {
+      requestRaw(info2, data) {
         return __awaiter(this, void 0, void 0, function* () {
           return new Promise((resolve, reject) => {
             function callbackForResult(err, res) {
@@ -17665,7 +17665,7 @@ var require_lib = __commonJS({
                 resolve(res);
               }
             }
-            this.requestRawWithCallback(info, data, callbackForResult);
+            this.requestRawWithCallback(info2, data, callbackForResult);
           });
         });
       }
@@ -17675,12 +17675,12 @@ var require_lib = __commonJS({
        * @param data
        * @param onResult
        */
-      requestRawWithCallback(info, data, onResult) {
+      requestRawWithCallback(info2, data, onResult) {
         if (typeof data === "string") {
-          if (!info.options.headers) {
-            info.options.headers = {};
+          if (!info2.options.headers) {
+            info2.options.headers = {};
           }
-          info.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
+          info2.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
         }
         let callbackCalled = false;
         function handleResult(err, res) {
@@ -17689,7 +17689,7 @@ var require_lib = __commonJS({
             onResult(err, res);
           }
         }
-        const req = info.httpModule.request(info.options, (msg) => {
+        const req = info2.httpModule.request(info2.options, (msg) => {
           const res = new HttpClientResponse(msg);
           handleResult(void 0, res);
         });
@@ -17701,7 +17701,7 @@ var require_lib = __commonJS({
           if (socket) {
             socket.end();
           }
-          handleResult(new Error(`Request timeout: ${info.options.path}`));
+          handleResult(new Error(`Request timeout: ${info2.options.path}`));
         });
         req.on("error", function(err) {
           handleResult(err);
@@ -17737,27 +17737,27 @@ var require_lib = __commonJS({
         return this._getProxyAgentDispatcher(parsedUrl, proxyUrl);
       }
       _prepareRequest(method, requestUrl, headers) {
-        const info = {};
-        info.parsedUrl = requestUrl;
-        const usingSsl = info.parsedUrl.protocol === "https:";
-        info.httpModule = usingSsl ? https : http;
+        const info2 = {};
+        info2.parsedUrl = requestUrl;
+        const usingSsl = info2.parsedUrl.protocol === "https:";
+        info2.httpModule = usingSsl ? https : http;
         const defaultPort = usingSsl ? 443 : 80;
-        info.options = {};
-        info.options.host = info.parsedUrl.hostname;
-        info.options.port = info.parsedUrl.port ? parseInt(info.parsedUrl.port) : defaultPort;
-        info.options.path = (info.parsedUrl.pathname || "") + (info.parsedUrl.search || "");
-        info.options.method = method;
-        info.options.headers = this._mergeHeaders(headers);
+        info2.options = {};
+        info2.options.host = info2.parsedUrl.hostname;
+        info2.options.port = info2.parsedUrl.port ? parseInt(info2.parsedUrl.port) : defaultPort;
+        info2.options.path = (info2.parsedUrl.pathname || "") + (info2.parsedUrl.search || "");
+        info2.options.method = method;
+        info2.options.headers = this._mergeHeaders(headers);
         if (this.userAgent != null) {
-          info.options.headers["user-agent"] = this.userAgent;
+          info2.options.headers["user-agent"] = this.userAgent;
         }
-        info.options.agent = this._getAgent(info.parsedUrl);
+        info2.options.agent = this._getAgent(info2.parsedUrl);
         if (this.handlers) {
           for (const handler of this.handlers) {
-            handler.prepareRequest(info.options);
+            handler.prepareRequest(info2.options);
           }
         }
-        return info;
+        return info2;
       }
       _mergeHeaders(headers) {
         if (this.requestOptions && this.requestOptions.headers) {
@@ -19747,26 +19747,26 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       (0, command_1.issueCommand)("notice", (0, utils_1.toCommandProperties)(properties), message instanceof Error ? message.toString() : message);
     }
     exports2.notice = notice;
-    function info(message) {
+    function info2(message) {
       process.stdout.write(message + os.EOL);
     }
-    exports2.info = info;
-    function startGroup(name) {
+    exports2.info = info2;
+    function startGroup2(name) {
       (0, command_1.issue)("group", name);
     }
-    exports2.startGroup = startGroup;
-    function endGroup() {
+    exports2.startGroup = startGroup2;
+    function endGroup2() {
       (0, command_1.issue)("endgroup");
     }
-    exports2.endGroup = endGroup;
+    exports2.endGroup = endGroup2;
     function group(name, fn) {
       return __awaiter(this, void 0, void 0, function* () {
-        startGroup(name);
+        startGroup2(name);
         let result;
         try {
           result = yield fn();
         } finally {
-          endGroup();
+          endGroup2();
         }
         return result;
       });
@@ -27143,6 +27143,11 @@ var require_dist = __commonJS({
 var fs = __toESM(require("node:fs/promises"));
 var core = __toESM(require_core());
 
+// ../core/dist/fingerprint.js
+function createFingerprint(id, file, line) {
+  return [id, file ?? "unknown", line ?? 0].join(":");
+}
+
 // ../core/dist/ids.js
 var findingIds = {
   // Security
@@ -27172,7 +27177,7 @@ var findingIds = {
   dependencyVulnerability: "dependencies:vulnerability"
 };
 
-// ../core/dist/policy-loader.js
+// ../core/dist/config.js
 var import_yaml = __toESM(require_dist(), 1);
 
 // ../core/dist/project.js
@@ -27380,15 +27385,6 @@ async function scan(rootDir, checks2, options = {}) {
     ...verification ? { verification } : {},
     duration: performance.now() - start
   };
-}
-
-// ../core/dist/fingerprint.js
-function createFingerprint(id, file, line) {
-  return [
-    id,
-    file ?? "unknown",
-    line ?? 0
-  ].join(":");
 }
 
 // ../checks/dist/build/package-json.js
@@ -28081,11 +28077,7 @@ var checks = [
 // ../reporter/dist/github.js
 function renderGithubSummary(findings) {
   if (findings.length === 0) {
-    return [
-      "## WreckCheck Report",
-      "",
-      "No issues found."
-    ].join("\n");
+    return ["## WreckCheck Report", "", "No issues found."].join("\n");
   }
   const lines = [
     "## WreckCheck Report",
@@ -28117,10 +28109,16 @@ var severityRank = {
   high: 3,
   critical: 4
 };
+function isSeverity(value) {
+  return value in severityRank;
+}
 async function writeSummary(content) {
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
   if (!summaryPath) {
     await fs.writeFile("wreckcheck-summary.md", content, "utf8");
+    core.info(
+      "GitHub summary file not available. Written to wreckcheck-summary.md"
+    );
     return;
   }
   await core.summary.addRaw(content).write();
@@ -28129,25 +28127,39 @@ async function run() {
   try {
     const verifyInput = core.getInput("verify");
     const verify = verifyInput === "" ? false : core.getBooleanInput("verify");
-    const result = await scan(process.cwd(), checks, { verify });
-    await writeSummary(renderGithubSummary(result.findings));
-    for (const finding of result.findings) {
-      if (!finding.file) {
-        continue;
-      }
-      core.error(finding.title, {
-        file: finding.file,
-        ...finding.line !== void 0 ? { startLine: finding.line } : {}
+    const failOnInput = core.getInput("fail-on") || "critical";
+    const failOn = isSeverity(failOnInput) ? failOnInput : "critical";
+    core.startGroup("Running WreckCheck");
+    const result = await scan(process.cwd(), checks, {
+      verify
+    });
+    core.endGroup();
+    const findings = result.findings;
+    await writeSummary(renderGithubSummary(findings));
+    core.startGroup("Findings");
+    for (const finding of findings) {
+      core.error(`${finding.title}: ${finding.description}`, {
+        ...finding.file ? {
+          file: finding.file
+        } : {},
+        ...finding.line !== void 0 ? {
+          startLine: finding.line
+        } : {}
       });
     }
-    const failOn = core.getInput("fail-on") || "critical";
-    const threshold = severityRank[failOn];
-    const shouldFail = result.findings.some(
-      (finding) => severityRank[finding.severity] >= threshold
+    core.endGroup();
+    const shouldFail = findings.some(
+      (finding) => severityRank[finding.severity] >= severityRank[failOn]
     );
     if (shouldFail) {
-      core.setFailed(`WreckCheck failed: ${failOn} issue detected.`);
+      core.setFailed(
+        `WreckCheck failed: ${failOn} or higher severity issue detected.`
+      );
+      return;
     }
+    core.info(
+      `WreckCheck passed: ${findings.length} issue${findings.length === 1 ? "" : "s"} found.`
+    );
   } catch (error2) {
     core.setFailed(error2 instanceof Error ? error2.message : String(error2));
   }

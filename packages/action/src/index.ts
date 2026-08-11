@@ -1,7 +1,5 @@
 import * as fs from 'node:fs/promises';
-
 import * as core from '@actions/core';
-
 import { checks } from '@wreckcheck/checks';
 import { scan } from '@wreckcheck/core';
 import { renderGithubSummary } from '@wreckcheck/reporter';

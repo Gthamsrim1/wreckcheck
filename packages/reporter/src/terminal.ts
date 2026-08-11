@@ -1,9 +1,9 @@
 import type {
 	Finding,
-	Policy,
 	RiskLevel,
 	ScanResult,
 	Severity,
+	WreckCheckConfig,
 } from '@wreckcheck/core';
 import {
 	calculateScore,
@@ -111,8 +111,12 @@ function formatScore(score: number): string {
 	return pc.red(`${score} / 100`);
 }
 
-export function renderTerminal(result: ScanResult, policy?: Policy): string {
+export function renderTerminal(
+	result: ScanResult,
+	config: WreckCheckConfig,
+): string {
 	const { project, findings, duration, verification } = result;
+	const { policy } = config;
 
 	const activeFindings = policy
 		? getActiveFindings(findings, policy)
@@ -146,6 +150,22 @@ export function renderTerminal(result: ScanResult, policy?: Policy): string {
 		`  Git            ${project.hasGit ? pc.green('✓') : pc.dim('✗')}`,
 	);
 	output.push('');
+
+	if (config.path) {
+		output.push('');
+		output.push(pc.bold('  CONFIGURATION'));
+		output.push(pc.dim('  ────────────────────────────────────────────'));
+
+		output.push(`  Config         ${config.path}`);
+
+		output.push(`  Fail on        ${policy.failOn}`);
+
+		output.push(
+			`  Ignored        ${policy.ignore.length} finding${
+				policy.ignore.length === 1 ? '' : 's'
+			}`,
+		);
+	}
 
 	output.push(pc.bold('  SHIP READINESS'));
 	output.push('');

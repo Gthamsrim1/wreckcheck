@@ -1,4 +1,4 @@
-import type { Policy, ScanResult } from '@wreckcheck/core';
+import type { ScanResult, WreckCheckConfig } from '@wreckcheck/core';
 
 import {
 	calculateScore,
@@ -6,14 +6,18 @@ import {
 	getRiskLevel,
 } from '@wreckcheck/core';
 
-export function renderJson(result: ScanResult, policy?: Policy): string {
-	const activeFindings = policy
-		? getActiveFindings(result.findings, policy)
-		: result.findings;
+export function renderJson(
+	result: ScanResult,
+	config: WreckCheckConfig,
+): string {
+	const { policy } = config;
 
-	const ignoredFindings = policy
-		? result.findings.filter((finding) => policy.ignore.includes(finding.id))
-		: [];
+	const activeFindings = getActiveFindings(result.findings, policy);
+
+	const ignoredFindings = result.findings.filter((finding) =>
+		policy.ignore.includes(finding.id),
+	);
+
 	const score = calculateScore(activeFindings);
 
 	const riskLevel = getRiskLevel(activeFindings);
@@ -21,7 +25,7 @@ export function renderJson(result: ScanResult, policy?: Policy): string {
 	return JSON.stringify(
 		{
 			project: result.project,
-			...(policy ? { policy } : {}),
+			config,
 			score,
 			riskLevel,
 			findings: {
