@@ -1,0 +1,17 @@
+name: WreckCheck
+description: Find what will wreck your release
+
+inputs:
+  fail-on:
+    description: Minimum severity that fails CI
+    required: false
+    default: critical
+
+  verify:
+    description: Run build, lint, and test verification
+    required: false
+    default: false
+
+runs:
+  using: node24
+  main: dist/index.js

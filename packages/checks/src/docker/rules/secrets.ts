@@ -27,10 +27,10 @@ export const dockerSecretsRule: DockerRule = ({ instructions }) => {
 			continue;
 		}
 
-		const name = assignment[1]!;
-		const value = assignment[2]!.trim();
+		const name = assignment[1];
+		const value = assignment[2]?.trim();
 
-		if (!SECRET_NAME_PATTERN.test(name)) {
+		if (!SECRET_NAME_PATTERN.test(name ?? '')) {
 			continue;
 		}
 

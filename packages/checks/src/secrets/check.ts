@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { Check, Finding, ScanContext } from '@wreckcheck/core';
-import { findingIds } from '@wreckcheck/core';
+import { createFingerprint, findingIds } from '@wreckcheck/core';
 
 interface SecretPattern {
 	id: string;
@@ -117,9 +117,15 @@ async function scanFile(rootDir: string, filePath: string): Promise<Finding[]> {
 		for (const match of matches) {
 			const index = match.index ?? 0;
 			const line = content.slice(0, index).split('\n').length;
+			const findingId = secretFindingIds[secret.id] ?? `security:${secret.id}`;
 
 			findings.push({
-				id: secretFindingIds[secret.id] ?? `security:${secret.id}`,
+				id: findingId,
+				fingerprint: createFingerprint(
+					findingId,
+					filePath.slice(rootDir.length + 1),
+					line,
+				),
 				severity: secret.severity,
 				category: 'security',
 				title: `${secret.name} detected`,

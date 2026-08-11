@@ -1,2 +1,9 @@
-dist/
 node_modules/
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Exceptions
+!packages/action/dist/
+!packages/action/dist/**

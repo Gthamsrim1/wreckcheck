@@ -11,6 +11,7 @@ export type Category =
 
 export interface Finding {
 	id: string;
+	fingerprint?: string;
 	severity: Severity;
 	category: Category;
 	title: string;

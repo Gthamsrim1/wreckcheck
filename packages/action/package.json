@@ -1,0 +1,20 @@
+{
+	"name": "@wreckcheck/action",
+	"version": "0.1.0",
+	"private": true,
+	"type": "commonjs",
+	"scripts": {
+		"build": "esbuild src/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.js",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@actions/core": "^1.11.1",
+		"@actions/github": "^6.0.0",
+		"@wreckcheck/checks": "workspace:*",
+		"@wreckcheck/core": "workspace:*",
+		"@wreckcheck/reporter": "workspace:*"
+	},
+	"devDependencies": {
+		"esbuild": "^0.28.2"
+	}
+}

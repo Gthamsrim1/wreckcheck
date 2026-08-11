@@ -34,8 +34,8 @@ export function parseDockerfile(content: string): DockerInstruction[] {
 
 		if (match) {
 			instructions.push({
-				instruction: match[1]!,
-				value: match[2]!,
+				instruction: match[1] ?? '',
+				value: match[2] ?? '',
 				line: startLine,
 			});
 		}
