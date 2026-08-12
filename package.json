@@ -4,7 +4,8 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo 'empty'",
+		"test": "pnpm -r test",
+		"test:integration": "pnpm --filter @wreckcheck/cli test:integration",
 		"build": "pnpm -r build",
 		"lint": "biome check .",
 		"format": "biome format --write .",

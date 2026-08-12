@@ -1,7 +1,12 @@
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { Check, Finding, ScanContext } from '@wreckcheck/core';
+import type {
+	Check,
+	CheckResult,
+	Finding,
+	ScanContext,
+} from '@wreckcheck/core';
 import { findingIds } from '@wreckcheck/core';
 
 import { isIgnored, isTracked } from './git.js';
@@ -21,8 +26,9 @@ export const environmentCheck: Check = {
 	name: 'Environment configuration',
 	category: 'environment',
 
-	async run(context: ScanContext): Promise<Finding[]> {
+	async run(context: ScanContext): Promise<CheckResult> {
 		const { rootDir } = context;
+		const start = performance.now();
 		const findings: Finding[] = [];
 
 		const envPath = join(rootDir, '.env');
@@ -86,6 +92,6 @@ export const environmentCheck: Check = {
 			}
 		}
 
-		return findings;
+		return { status: 'passed', findings, duration: performance.now() - start };
 	},
 };

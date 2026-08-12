@@ -1,3 +1,5 @@
+import type { CommandResult } from '../verification/types.js';
+
 export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
 export type Category =
@@ -38,6 +40,7 @@ export type CheckStatus = 'passed' | 'findings' | 'error' | 'skipped';
 export interface CheckResult {
 	status: CheckStatus;
 	findings: Finding[];
+	verification?: CommandResult[];
 	duration: number;
 	error?: string;
 }
@@ -53,7 +56,7 @@ export interface Check {
 	name: string;
 	category: Category;
 
-	run(context: ScanContext): Promise<Finding[]>;
+	run(context: ScanContext): Promise<CheckResult>;
 }
 
 export interface ProjectInfo {

@@ -1,4 +1,4 @@
-import type { Check, Finding } from '@wreckcheck/core';
+import type { Check, CheckResult, Finding } from '@wreckcheck/core';
 import { findingIds } from '@wreckcheck/core';
 import { readPackageJson } from './package-json.js';
 
@@ -7,14 +7,20 @@ export const buildCheck: Check = {
 	name: 'Build configuration',
 	category: 'build',
 
-	async run(context): Promise<Finding[]> {
+	async run(context): Promise<CheckResult> {
 		const packageJson = await readPackageJson(context.rootDir);
 
 		if (!packageJson) {
-			return [];
+			return {
+				status: 'error',
+				findings: [],
+				duration: 0,
+				error: "package.json doesn't exist",
+			};
 		}
 
 		const scripts = packageJson.scripts ?? {};
+		const start = performance.now();
 		const findings: Finding[] = [];
 
 		if (!scripts.build) {
@@ -56,6 +62,6 @@ export const buildCheck: Check = {
 			});
 		}
 
-		return findings;
+		return { status: 'passed', findings, duration: performance.now() - start };
 	},
 };

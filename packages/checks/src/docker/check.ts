@@ -1,7 +1,7 @@
 import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { Check, Finding } from '@wreckcheck/core';
+import type { Check, CheckResult } from '@wreckcheck/core';
 
 import { parseDockerfile } from './parser.js';
 import { dockerBaseImageRule } from './rules/base-image.js';
@@ -30,11 +30,17 @@ export const dockerCheck: Check = {
 	name: 'Docker configuration',
 	category: 'docker',
 
-	async run(context): Promise<Finding[]> {
+	async run(context): Promise<CheckResult> {
 		const dockerfilePath = join(context.rootDir, 'Dockerfile');
+		const start = performance.now();
 
 		if (!(await exists(dockerfilePath))) {
-			return [];
+			return {
+				status: 'error',
+				findings: [],
+				duration: 0,
+				error: "Filepath doesn't exist",
+			};
 		}
 
 		const dockerfile = await readFile(dockerfilePath, 'utf8');
@@ -48,7 +54,8 @@ export const dockerCheck: Check = {
 		};
 
 		const results = await Promise.all(rules.map((rule) => rule(ruleContext)));
+		const findings = results.flat();
 
-		return results.flat();
+		return { status: 'passed', findings, duration: performance.now() - start };
 	},
 };

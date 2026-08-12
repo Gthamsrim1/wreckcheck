@@ -28,6 +28,12 @@ export function renderJson(
 			config,
 			score,
 			riskLevel,
+			verification: result.verification.map((command) => ({
+				command: command.display,
+				exitCode: command.exitCode,
+				timedOut: command.timedOut,
+				...(command.output ? { output: command.output } : {}),
+			})),
 			findings: {
 				active: activeFindings,
 				ignored: ignoredFindings,

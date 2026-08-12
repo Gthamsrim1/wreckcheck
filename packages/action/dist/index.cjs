@@ -27360,13 +27360,21 @@ async function scan(rootDir, checks2, options = {}) {
       return await check.run(context);
     } catch (error2) {
       console.error(`Check "${check.id}" failed:`, error2);
-      return [];
+      return {
+        status: "error",
+        findings: [],
+        verification: [],
+        duration: 0,
+        error: error2 instanceof Error ? error2.message : String(error2)
+      };
     }
   }));
-  const findings = results.flat();
+  const findings = results.flatMap((result) => result.findings);
+  const verification = results.flatMap((result) => result.verification ?? []);
   return {
     project,
     findings,
+    verification,
     duration: performance.now() - start
   };
 }
@@ -27377,7 +27385,8 @@ var import_node_path3 = require("node:path");
 
 // ../core/dist/verification/runner.js
 var import_node_child_process = require("node:child_process");
-var DEFAULT_TIMEOUT = 5 * 60 * 1e3;
+var DEFAULT_TIMEOUT = 2 * 60 * 1e3;
+var KILL_GRACE_PERIOD = 5e3;
 var MAX_OUTPUT_LENGTH = 12e3;
 async function runCommand(command, args, options) {
   const startedAt = performance.now();
@@ -27385,43 +27394,84 @@ async function runCommand(command, args, options) {
     const child = (0, import_node_child_process.spawn)(command, args, {
       cwd: options.cwd,
       shell: false,
-      stdio: ["ignore", "pipe", "pipe"]
+      stdio: ["ignore", "pipe", "pipe"],
+      detached: process.platform !== "win32"
     });
     let output = "";
     let timedOut = false;
+    let finished = false;
+    const timeout = options.timeout ?? DEFAULT_TIMEOUT;
     const timer = setTimeout(() => {
+      if (finished) {
+        return;
+      }
       timedOut = true;
-      child.kill("SIGTERM");
-    }, options.timeout ?? DEFAULT_TIMEOUT);
+      killProcessTree(child);
+      setTimeout(() => {
+        if (finished) {
+          return;
+        }
+        killProcessTree(child, true);
+      }, KILL_GRACE_PERIOD);
+    }, timeout);
     child.stdout.on("data", (chunk) => {
       output += chunk.toString();
     });
     child.stderr.on("data", (chunk) => {
       output += chunk.toString();
     });
-    child.on("error", (error2) => {
+    child.once("error", (error2) => {
+      if (finished) {
+        return;
+      }
+      finished = true;
       clearTimeout(timer);
       resolve2({
         command,
         display: options.display,
         exitCode: null,
-        output: error2.message,
+        output: truncateOutput(timedOut ? `${output}
+
+Command timed out: ${error2.message}` : error2.message),
         duration: performance.now() - startedAt,
         timedOut
       });
     });
-    child.on("close", (code) => {
+    child.once("close", (code) => {
+      if (finished) {
+        return;
+      }
+      finished = true;
       clearTimeout(timer);
       resolve2({
         command,
         display: options.display,
-        exitCode: code,
-        output: truncateOutput(output),
+        exitCode: timedOut ? null : code,
+        output: truncateOutput(timedOut ? `${output}
+
+Command timed out after ${timeout / 1e3} seconds.` : output),
         duration: performance.now() - startedAt,
         timedOut
       });
     });
   });
+}
+function killProcessTree(child, force = false) {
+  if (child.pid === void 0) {
+    return;
+  }
+  if (process.platform === "win32") {
+    child.kill(force ? "SIGKILL" : "SIGTERM");
+    return;
+  }
+  try {
+    process.kill(-child.pid, force ? "SIGKILL" : "SIGTERM");
+  } catch {
+    try {
+      child.kill(force ? "SIGKILL" : "SIGTERM");
+    } catch {
+    }
+  }
 }
 function truncateOutput(output) {
   const trimmed = output.trim();
@@ -27456,16 +27506,21 @@ var goAdapter = {
     return exists((0, import_node_path3.join)(context.rootDir, "go.mod"));
   },
   async run(context) {
-    return [
-      await runCommand("go", ["test", "./..."], {
-        cwd: context.rootDir,
-        display: "go test ./..."
-      }),
-      await runCommand("go", ["vet", "./..."], {
-        cwd: context.rootDir,
-        display: "go vet ./..."
-      })
-    ];
+    const results = [];
+    const test = await runCommand("go", ["test", "./..."], {
+      cwd: context.rootDir,
+      display: "go test ./..."
+    });
+    results.push(test);
+    if (test.exitCode !== 0 || test.timedOut) {
+      return results;
+    }
+    const vet = await runCommand("go", ["vet", "./..."], {
+      cwd: context.rootDir,
+      display: "go vet ./..."
+    });
+    results.push(vet);
+    return results;
   }
 };
 
@@ -27531,7 +27586,7 @@ var npmAdapter = {
       if (!scripts[script]) {
         continue;
       }
-      const command = getCommand(context.project.packageManager, script);
+      const command = getCommand(context.project.packageManager ?? "npm", script);
       if (!command) {
         continue;
       }
@@ -27540,7 +27595,7 @@ var npmAdapter = {
         display: command.display
       });
       results.push(result);
-      if (result.exitCode !== 0) {
+      if (result.exitCode !== 0 || result.timedOut) {
         break;
       }
     }
@@ -27591,16 +27646,21 @@ var rustAdapter = {
     return exists4((0, import_node_path6.join)(context.rootDir, "Cargo.toml"));
   },
   async run(context) {
-    return [
-      await runCommand("cargo", ["test"], {
-        cwd: context.rootDir,
-        display: "cargo test"
-      }),
-      await runCommand("cargo", ["clippy"], {
-        cwd: context.rootDir,
-        display: "cargo clippy"
-      })
-    ];
+    const results = [];
+    const test = await runCommand("cargo", ["test"], {
+      cwd: context.rootDir,
+      display: "cargo test"
+    });
+    results.push(test);
+    if (test.exitCode !== 0 || test.timedOut) {
+      return results;
+    }
+    const clippy = await runCommand("cargo", ["clippy"], {
+      cwd: context.rootDir,
+      display: "cargo clippy"
+    });
+    results.push(clippy);
+    return results;
   }
 };
 
@@ -27640,9 +27700,15 @@ var buildCheck = {
   async run(context) {
     const packageJson = await readPackageJson(context.rootDir);
     if (!packageJson) {
-      return [];
+      return {
+        status: "error",
+        findings: [],
+        duration: 0,
+        error: "package.json doesn't exist"
+      };
     }
     const scripts = packageJson.scripts ?? {};
+    const start = performance.now();
     const findings = [];
     if (!scripts.build) {
       findings.push({
@@ -27677,7 +27743,7 @@ var buildCheck = {
         recommendation: "Add a lint script to catch code-quality and correctness issues before release."
       });
     }
-    return findings;
+    return { status: "passed", findings, duration: performance.now() - start };
   }
 };
 
@@ -27782,18 +27848,27 @@ var dependenciesCheck = {
   name: "Dependency vulnerabilities",
   category: "dependencies",
   async run(context) {
+    const start = performance.now();
+    let findings = [];
     switch (context.project.packageManager) {
       case "npm": {
         const output = await runAudit("npm", ["audit", "--json"], context.rootDir);
-        return output ? await parseNpmAudit(output, context.rootDir) : [];
+        findings = output ? await parseNpmAudit(output, context.rootDir) : [];
+        break;
       }
       case "pnpm": {
         const output = await runAudit("pnpm", ["audit", "--json"], context.rootDir);
-        return output ? parsePnpmAudit(output) : [];
+        findings = output ? parsePnpmAudit(output) : [];
+        break;
       }
       default:
-        return [];
+        break;
     }
+    return {
+      status: "passed",
+      findings,
+      duration: performance.now() - start
+    };
   }
 };
 
@@ -28053,8 +28128,14 @@ var dockerCheck = {
   category: "docker",
   async run(context) {
     const dockerfilePath = (0, import_node_path11.join)(context.rootDir, "Dockerfile");
+    const start = performance.now();
     if (!await exists6(dockerfilePath)) {
-      return [];
+      return {
+        status: "error",
+        findings: [],
+        duration: 0,
+        error: "Filepath doesn't exist"
+      };
     }
     const dockerfile = await (0, import_promises10.readFile)(dockerfilePath, "utf8");
     const instructions = parseDockerfile(dockerfile);
@@ -28064,7 +28145,8 @@ var dockerCheck = {
       dockerfile
     };
     const results = await Promise.all(rules.map((rule) => rule(ruleContext)));
-    return results.flat();
+    const findings = results.flat();
+    return { status: "passed", findings, duration: performance.now() - start };
   }
 };
 
@@ -28133,6 +28215,7 @@ var environmentCheck = {
   category: "environment",
   async run(context) {
     const { rootDir } = context;
+    const start = performance.now();
     const findings = [];
     const envPath = (0, import_node_path12.join)(rootDir, ".env");
     const examplePath = (0, import_node_path12.join)(rootDir, ".env.example");
@@ -28179,7 +28262,7 @@ var environmentCheck = {
         });
       }
     }
-    return findings;
+    return { status: "passed", findings, duration: performance.now() - start };
   }
 };
 
@@ -28293,8 +28376,10 @@ var secretsCheck = {
   category: "security",
   async run(context) {
     const files = await getFiles(context.rootDir);
+    const start = performance.now();
     const results = await Promise.all(files.map((file) => scanFile(context.rootDir, file)));
-    return results.flat();
+    const findings = results.flat();
+    return { status: "passed", findings, duration: performance.now() - start };
   }
 };
 
@@ -28305,17 +28390,23 @@ var verificationCheck = {
   category: "verification",
   async run(context) {
     const results = await runVerification(context);
-    return results.filter((result) => result.exitCode !== 0 || result.timedOut).map((result) => ({
-      id: result.timedOut ? findingIds.verificationCommandTimedOut : findingIds.verificationCommandFailed,
-      severity: "high",
-      category: "verification",
-      title: result.timedOut ? "Verification command timed out" : "Verification command failed",
-      description: result.timedOut ? `${result.display} exceeded the allowed execution time.` : `${result.display} exited with code ${result.exitCode}.`,
-      recommendation: "Fix verification failures before releasing.",
-      ...result.output ? {
-        evidence: result.output
-      } : {}
-    }));
+    const start = performance.now();
+    return {
+      status: "passed",
+      findings: results.filter((result) => result.exitCode !== 0 || result.timedOut).map((result) => ({
+        id: result.timedOut ? findingIds.verificationCommandTimedOut : findingIds.verificationCommandFailed,
+        severity: "high",
+        category: "verification",
+        title: result.timedOut ? "Verification command timed out" : "Verification command failed",
+        description: result.timedOut ? `${result.display} exceeded the allowed execution time.` : `${result.display} exited with code ${result.exitCode}.`,
+        recommendation: "Fix verification failures before releasing.",
+        ...result.output ? {
+          evidence: result.output
+        } : {}
+      })),
+      duration: performance.now() - start,
+      verification: results
+    };
   }
 };
 
@@ -28330,16 +28421,26 @@ var checks = [
 ];
 
 // ../reporter/dist/github.js
-function renderGithubSummary(findings) {
-  if (findings.length === 0) {
+function renderGithubSummary(result) {
+  const { findings, verification } = result;
+  if (findings.length === 0 && verification.length === 0) {
     return ["## WreckCheck Report", "", "No issues found."].join("\n");
   }
-  const lines = [
-    "## WreckCheck Report",
-    "",
-    `Found ${findings.length} issue${findings.length === 1 ? "" : "s"}.`,
-    ""
-  ];
+  const lines = ["## WreckCheck Report", ""];
+  if (verification.length > 0) {
+    lines.push("### Verification", "");
+    for (const command of verification) {
+      const failed = command.timedOut || command.exitCode !== 0;
+      lines.push(`${failed ? "\u274C" : "\u2705"} \`${command.display}\``);
+    }
+    lines.push("");
+  }
+  if (findings.length === 0) {
+    lines.push("No issues found.");
+    return lines.join("\n");
+  }
+  lines.push(`Found ${findings.length} issue${findings.length === 1 ? "" : "s"}.`);
+  lines.push("");
   for (const finding of findings) {
     lines.push(`### ${finding.severity.toUpperCase()}: ${finding.title}`);
     if (finding.file) {

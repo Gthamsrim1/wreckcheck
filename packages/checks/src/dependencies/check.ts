@@ -1,6 +1,12 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import type { Check, Finding, ScanContext, Severity } from '@wreckcheck/core';
+import type {
+	Check,
+	CheckResult,
+	Finding,
+	ScanContext,
+	Severity,
+} from '@wreckcheck/core';
 import { findingIds } from '@wreckcheck/core';
 import { getInstalledVersion } from './npm.js';
 
@@ -180,7 +186,10 @@ export const dependenciesCheck: Check = {
 	name: 'Dependency vulnerabilities',
 	category: 'dependencies',
 
-	async run(context: ScanContext): Promise<Finding[]> {
+	async run(context: ScanContext): Promise<CheckResult> {
+		const start = performance.now();
+		let findings: Finding[] = [];
+
 		switch (context.project.packageManager) {
 			case 'npm': {
 				const output = await runAudit(
@@ -189,7 +198,9 @@ export const dependenciesCheck: Check = {
 					context.rootDir,
 				);
 
-				return output ? await parseNpmAudit(output, context.rootDir) : [];
+				findings = output ? await parseNpmAudit(output, context.rootDir) : [];
+
+				break;
 			}
 
 			case 'pnpm': {
@@ -199,11 +210,19 @@ export const dependenciesCheck: Check = {
 					context.rootDir,
 				);
 
-				return output ? parsePnpmAudit(output) : [];
+				findings = output ? parsePnpmAudit(output) : [];
+
+				break;
 			}
 
 			default:
-				return [];
+				break;
 		}
+
+		return {
+			status: 'passed',
+			findings,
+			duration: performance.now() - start,
+		};
 	},
 };

@@ -115,7 +115,7 @@ export function renderTerminal(
 	result: ScanResult,
 	config: WreckCheckConfig,
 ): string {
-	const { project, findings, duration } = result;
+	const { project, findings, verification, duration } = result;
 	const { policy } = config;
 
 	const activeFindings = policy
@@ -165,6 +165,28 @@ export function renderTerminal(
 				policy.ignore.length === 1 ? '' : 's'
 			}`,
 		);
+	}
+
+	if (verification.length > 0) {
+		output.push(pc.bold('  VERIFICATION'));
+		output.push(pc.dim('  ────────────────────────────────────────────'));
+		output.push('');
+
+		for (const command of verification) {
+			const failed = command.timedOut || command.exitCode !== 0;
+
+			output.push(
+				`  ${failed ? pc.red('✖') : pc.green('✓')} ${command.display}`,
+			);
+
+			if (failed && command.timedOut) {
+				output.push(`    ${pc.dim('Timed out')}`);
+			} else if (failed) {
+				output.push(`    ${pc.dim(`Exited with code ${command.exitCode}`)}`);
+			}
+		}
+
+		output.push('');
 	}
 
 	output.push(pc.bold('  SHIP READINESS'));

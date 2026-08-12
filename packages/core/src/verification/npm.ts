@@ -84,7 +84,10 @@ export const npmAdapter: VerificationAdapter = {
 				continue;
 			}
 
-			const command = getCommand(context.project.packageManager, script);
+			const command = getCommand(
+				context.project.packageManager ?? 'npm',
+				script,
+			);
 
 			if (!command) {
 				continue;

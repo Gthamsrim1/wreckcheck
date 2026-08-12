@@ -1,7 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { Check, Finding, ScanContext } from '@wreckcheck/core';
+import type {
+	Check,
+	CheckResult,
+	Finding,
+	ScanContext,
+} from '@wreckcheck/core';
 import { createFingerprint, findingIds } from '@wreckcheck/core';
 
 interface SecretPattern {
@@ -146,13 +151,15 @@ export const secretsCheck: Check = {
 	name: 'Secret detection',
 	category: 'security',
 
-	async run(context: ScanContext): Promise<Finding[]> {
+	async run(context: ScanContext): Promise<CheckResult> {
 		const files = await getFiles(context.rootDir);
+		const start = performance.now();
 
 		const results = await Promise.all(
 			files.map((file) => scanFile(context.rootDir, file)),
 		);
+		const findings = results.flat();
 
-		return results.flat();
+		return { status: 'passed', findings, duration: performance.now() - start };
 	},
 };
