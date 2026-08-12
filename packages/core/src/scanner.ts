@@ -1,17 +1,10 @@
-import type {
-	Check,
-	Finding,
-	ProjectInfo,
-	VerificationResult,
-} from './checks/types.js';
+import type { Check, Finding, ProjectInfo } from './checks/types.js';
 
 import { discoverProject } from './project.js';
-import { runVerification } from './verification.js';
 
 export interface ScanResult {
 	project: ProjectInfo;
 	findings: Finding[];
-	verification?: VerificationResult[];
 	duration: number;
 }
 
@@ -40,7 +33,6 @@ export async function scan(
 				return await check.run(context);
 			} catch (error) {
 				console.error(`Check "${check.id}" failed:`, error);
-
 				return [];
 			}
 		}),
@@ -48,14 +40,9 @@ export async function scan(
 
 	const findings = results.flat();
 
-	const verification = options.verify
-		? await runVerification(rootDir, project)
-		: undefined;
-
 	return {
 		project,
 		findings,
-		...(verification ? { verification } : {}),
 		duration: performance.now() - start,
 	};
 }

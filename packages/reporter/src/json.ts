@@ -32,7 +32,6 @@ export function renderJson(
 				active: activeFindings,
 				ignored: ignoredFindings,
 			},
-			verification: result.verification ?? [],
 			duration: Math.round(result.duration),
 		},
 		null,

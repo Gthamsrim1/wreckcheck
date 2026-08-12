@@ -17,7 +17,7 @@ program
 	.argument('[directory]', 'Project directory to scan', '.')
 	.option('--verify', 'Run project build, lint, and test commands')
 	.option('--ci', 'Run in CI mode with machine-readable output')
-	.option('--no-config', 'Ignore project configuration file', false)
+	.option('--skip-config', 'Ignore project configuration file')
 	.option('--config <file>', 'Use a custom configuration file')
 	.option('--sarif <file>', 'Write SARIF output')
 	.action(
@@ -27,13 +27,13 @@ program
 				verify?: boolean;
 				ci?: boolean;
 				config?: string;
-				noConfig?: boolean;
+				skipConfig?: boolean;
 				sarif?: string;
 			},
 		) => {
 			const rootDir = path.resolve(directory);
 
-			const config = options.noConfig
+			const config = options.skipConfig
 				? { policy: DEFAULT_POLICY }
 				: await loadConfig(
 						rootDir,
@@ -45,7 +45,11 @@ program
 			});
 
 			if (options.sarif) {
-				await writeFile(options.sarif, renderSarif(result.findings), 'utf8');
+				await writeFile(
+					options.sarif,
+					renderSarif(result.findings, config),
+					'utf8',
+				);
 			}
 
 			if (options.ci) {

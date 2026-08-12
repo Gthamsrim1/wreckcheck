@@ -7,7 +7,8 @@ export type Category =
 	| 'docker'
 	| 'build'
 	| 'production'
-	| 'project';
+	| 'project'
+	| 'verification';
 
 export interface Finding {
 	id: string;
@@ -62,14 +63,4 @@ export interface ProjectInfo {
 	framework?: string;
 	hasDocker: boolean;
 	hasGit: boolean;
-}
-
-export type VerificationStatus = 'passed' | 'failed' | 'skipped';
-
-export interface VerificationResult {
-	command: string;
-	status: VerificationStatus;
-	duration: number;
-	output?: string;
-	reason?: string;
 }

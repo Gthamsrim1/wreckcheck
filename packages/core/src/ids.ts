@@ -28,4 +28,10 @@ export const findingIds = {
 
 	// Dependencies
 	dependencyVulnerability: 'dependencies:vulnerability',
+
+	// Verification
+	verificationCommandFailed: 'verification:command-failed',
+	verificationCommandTimedOut: 'verification:command-timed-out',
+	verificationNoProjectAdapter: 'verification:no-project-adapter',
+	verificationMissingScript: 'verification:missing-script',
 } as const;

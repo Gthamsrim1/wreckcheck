@@ -115,7 +115,7 @@ export function renderTerminal(
 	result: ScanResult,
 	config: WreckCheckConfig,
 ): string {
-	const { project, findings, duration, verification } = result;
+	const { project, findings, duration } = result;
 	const { policy } = config;
 
 	const activeFindings = policy
@@ -215,57 +215,6 @@ export function renderTerminal(
 			output.push(`  ${pc.dim('○')} ${finding.title}`);
 			output.push(`    ${pc.dim(finding.id)}`);
 			output.push(`    ${pc.dim('Ignored by .wreckcheck.yml')}`);
-			output.push('');
-		}
-	}
-
-	if (verification?.length) {
-		output.push('');
-		output.push(pc.bold('  VERIFICATION'));
-		output.push(pc.dim('  ────────────────────────────────────────────'));
-		output.push('');
-
-		for (const check of verification) {
-			switch (check.status) {
-				case 'passed':
-					output.push(
-						`  ${pc.green('✓')} ${check.command} ${pc.dim(
-							`${Math.round(check.duration)}ms`,
-						)}`,
-					);
-					break;
-
-				case 'failed':
-					output.push(
-						`  ${pc.red('✖')} ${check.command} ${pc.dim(
-							`${Math.round(check.duration)}ms`,
-						)}`,
-					);
-
-					if (check.output) {
-						output.push('');
-
-						output.push(
-							check.output
-								.trim()
-								.split('\n')
-								.map((line: string) => `    ${line}`)
-								.join('\n'),
-						);
-					}
-
-					break;
-
-				case 'skipped':
-					output.push(`  ${pc.yellow('⏭')} ${check.command}`);
-
-					if (check.reason) {
-						output.push(`    ${pc.dim(check.reason)}`);
-					}
-
-					break;
-			}
-
 			output.push('');
 		}
 	}

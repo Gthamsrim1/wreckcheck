@@ -6,4 +6,4 @@ export * from './policy.js';
 export * from './project.js';
 export * from './scanner.js';
 export * from './score.js';
-export * from './verification.js';
+export * from './verification/index.js';
