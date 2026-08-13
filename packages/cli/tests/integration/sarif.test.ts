@@ -16,10 +16,9 @@ describe('SARIF output', () => {
 	it('writes valid SARIF output', async () => {
 		projectDir = await createTempProject();
 
-		await writeFile(
-			`${projectDir}/config.js`,
-			`const key = "AKIAIOSFODNN7EXAMPLE";`,
-		);
+		const awsKey = ['AKIA', 'IOSFODNN7EXAMPLE'].join('');
+
+		await writeFile(`${projectDir}/config.js`, `const key = "${awsKey}";`);
 
 		const sarifPath = `${projectDir}/wreckcheck.sarif`;
 

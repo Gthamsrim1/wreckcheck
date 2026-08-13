@@ -1,21 +1,29 @@
 {
-	"name": "@wreckcheck/cli",
-	"version": "0.1.0",
-	"private": true,
+	"name": "wreckcheck",
+	"version": "0.2.0",
+	"description": "A release-readiness CLI for scanning projects for security, configuration, dependency, Docker, and build issues.",
 	"type": "module",
+	"files": [
+		"dist"
+	],
 	"bin": {
 		"wreckcheck": "./dist/index.js"
 	},
 	"scripts": {
-		"build": "tsc",
+		"build": "tsup && shx chmod +x dist/index.js",
 		"dev": "tsx src/index.ts",
 		"test": "vitest run",
 		"test:integration": "pnpm build && vitest run tests/integration"
 	},
 	"dependencies": {
+		"commander": "^14.0.3",
+		"yaml": "^2.9.0"
+	},
+	"devDependencies": {
 		"@wreckcheck/checks": "workspace:*",
 		"@wreckcheck/core": "workspace:*",
 		"@wreckcheck/reporter": "workspace:*",
-		"commander": "^14.0.3"
+		"shx": "^0.4.0",
+		"tsup": "^8.5.1"
 	}
 }

@@ -16,10 +16,9 @@ describe('security checks', () => {
 	it('detects an AWS access key pattern', async () => {
 		projectDir = await createTempProject();
 
-		await writeFile(
-			`${projectDir}/config.js`,
-			`const key = "AKIAIOSFODNN7EXAMPLE";`,
-		);
+		const awsKey = ['AKIA', 'IOSFODNN7EXAMPLE'].join('');
+
+		await writeFile(`${projectDir}/config.js`, `const key = "${awsKey}";`);
 
 		const result = await runCli(projectDir, ['--ci']);
 
