@@ -48,15 +48,11 @@ function mapLevel(severity: Finding['severity']): 'error' | 'warning' | 'note' {
  * @returns The location, or `undefined` for findings that are about the
  * project as a whole rather than a file.
  */
-function createLocation(finding: Finding): SarifLocation | undefined {
-	if (!finding.file) {
-		return undefined;
-	}
-
+function createLocation(finding: Finding): SarifLocation {
 	return {
 		physicalLocation: {
 			artifactLocation: {
-				uri: finding.file,
+				uri: finding.file ?? '.',
 			},
 			...(finding.line !== undefined
 				? {
@@ -107,25 +103,17 @@ export function renderSarif(
 		).values(),
 	];
 
-	const results = findings.map((finding) => {
-		const location = createLocation(finding);
+	const results = findings.map((finding) => ({
+		ruleId: finding.id,
 
-		return {
-			ruleId: finding.id,
+		level: mapLevel(finding.severity),
 
-			level: mapLevel(finding.severity),
+		message: {
+			text: finding.description,
+		},
 
-			message: {
-				text: finding.description,
-			},
-
-			...(location
-				? {
-						locations: [location],
-					}
-				: {}),
-		};
-	});
+		locations: [createLocation(finding)],
+	}));
 
 	return JSON.stringify(
 		{

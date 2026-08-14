@@ -4017,11 +4017,11 @@ var require_util2 = __commonJS({
     var { isUint8Array } = require("node:util/types");
     var { webidl } = require_webidl();
     var supportedHashes = [];
-    var crypto;
+    var crypto2;
     try {
-      crypto = require("node:crypto");
+      crypto2 = require("node:crypto");
       const possibleRelevantHashes = ["sha256", "sha384", "sha512"];
-      supportedHashes = crypto.getHashes().filter((hash) => possibleRelevantHashes.includes(hash));
+      supportedHashes = crypto2.getHashes().filter((hash) => possibleRelevantHashes.includes(hash));
     } catch {
     }
     function responseURL(response) {
@@ -4294,7 +4294,7 @@ var require_util2 = __commonJS({
       }
     }
     function bytesMatch(bytes, metadataList) {
-      if (crypto === void 0) {
+      if (crypto2 === void 0) {
         return true;
       }
       const parsedMetadata = parseMetadata(metadataList);
@@ -4309,7 +4309,7 @@ var require_util2 = __commonJS({
       for (const item of metadata) {
         const algorithm = item.algo;
         const expectedValue = item.hash;
-        let actualValue = crypto.createHash(algorithm).update(bytes).digest("base64");
+        let actualValue = crypto2.createHash(algorithm).update(bytes).digest("base64");
         if (actualValue[actualValue.length - 1] === "=") {
           if (actualValue[actualValue.length - 2] === "=") {
             actualValue = actualValue.slice(0, -2);
@@ -5373,8 +5373,8 @@ var require_body = __commonJS({
     var { multipartFormDataParser } = require_formdata_parser();
     var random;
     try {
-      const crypto = require("node:crypto");
-      random = (max) => crypto.randomInt(0, max);
+      const crypto2 = require("node:crypto");
+      random = (max) => crypto2.randomInt(0, max);
     } catch {
       random = (max) => Math.floor(Math.random(max));
     }
@@ -16950,13 +16950,13 @@ var require_frame = __commonJS({
     "use strict";
     var { maxUnsigned16Bit } = require_constants5();
     var BUFFER_SIZE = 16386;
-    var crypto;
+    var crypto2;
     var buffer = null;
     var bufIdx = BUFFER_SIZE;
     try {
-      crypto = require("node:crypto");
+      crypto2 = require("node:crypto");
     } catch {
-      crypto = {
+      crypto2 = {
         // not full compatibility, but minimum.
         randomFillSync: function randomFillSync(buffer2, _offset, _size) {
           for (let i = 0; i < buffer2.length; ++i) {
@@ -16969,7 +16969,7 @@ var require_frame = __commonJS({
     function generateMask() {
       if (bufIdx === BUFFER_SIZE) {
         bufIdx = 0;
-        crypto.randomFillSync(buffer ??= Buffer.allocUnsafe(BUFFER_SIZE), 0, BUFFER_SIZE);
+        crypto2.randomFillSync(buffer ??= Buffer.allocUnsafe(BUFFER_SIZE), 0, BUFFER_SIZE);
       }
       return [buffer[bufIdx++], buffer[bufIdx++], buffer[bufIdx++], buffer[bufIdx++]];
     }
@@ -17041,9 +17041,9 @@ var require_connection = __commonJS({
     var { Headers: Headers2, getHeadersList } = require_headers();
     var { getDecodeSplit } = require_util2();
     var { WebsocketFrameSend } = require_frame();
-    var crypto;
+    var crypto2;
     try {
-      crypto = require("node:crypto");
+      crypto2 = require("node:crypto");
     } catch {
     }
     function establishWebSocketConnection(url, protocols, client, ws, onEstablish, options) {
@@ -17063,7 +17063,7 @@ var require_connection = __commonJS({
         const headersList = getHeadersList(new Headers2(options.headers));
         request.headersList = headersList;
       }
-      const keyValue = crypto.randomBytes(16).toString("base64");
+      const keyValue = crypto2.randomBytes(16).toString("base64");
       request.headersList.append("sec-websocket-key", keyValue);
       request.headersList.append("sec-websocket-version", "13");
       for (const protocol of protocols) {
@@ -17093,7 +17093,7 @@ var require_connection = __commonJS({
             return;
           }
           const secWSAccept = response.headersList.get("Sec-WebSocket-Accept");
-          const digest = crypto.createHash("sha1").update(keyValue + uid).digest("base64");
+          const digest = crypto2.createHash("sha1").update(keyValue + uid).digest("base64");
           if (secWSAccept !== digest) {
             failWebsocketConnection(ws, "Incorrect hash received in Sec-WebSocket-Accept header.");
             return;
@@ -25705,14 +25705,14 @@ var require_parser = __commonJS({
             case "scalar":
             case "single-quoted-scalar":
             case "double-quoted-scalar": {
-              const fs3 = this.flowScalar(this.type);
+              const fs4 = this.flowScalar(this.type);
               if (atNextItem || it.value) {
-                map.items.push({ start, key: fs3, sep: [] });
+                map.items.push({ start, key: fs4, sep: [] });
                 this.onKeyLine = true;
               } else if (it.sep) {
-                this.stack.push(fs3);
+                this.stack.push(fs4);
               } else {
-                Object.assign(it, { key: fs3, sep: [] });
+                Object.assign(it, { key: fs4, sep: [] });
                 this.onKeyLine = true;
               }
               return;
@@ -25840,13 +25840,13 @@ var require_parser = __commonJS({
             case "scalar":
             case "single-quoted-scalar":
             case "double-quoted-scalar": {
-              const fs3 = this.flowScalar(this.type);
+              const fs4 = this.flowScalar(this.type);
               if (!it || it.value)
-                fc.items.push({ start: [], key: fs3, sep: [] });
+                fc.items.push({ start: [], key: fs4, sep: [] });
               else if (it.sep)
-                this.stack.push(fs3);
+                this.stack.push(fs4);
               else
-                Object.assign(it, { key: fs3, sep: [] });
+                Object.assign(it, { key: fs4, sep: [] });
               return;
             }
             case "flow-map-end":
@@ -26155,7 +26155,7 @@ var require_dist = __commonJS({
 });
 
 // src/index.ts
-var fs2 = __toESM(require("node:fs/promises"), 1);
+var fs3 = __toESM(require("node:fs/promises"), 1);
 
 // ../../node_modules/.pnpm/@actions+core@3.0.1/node_modules/@actions/core/lib/command.js
 var os = __toESM(require("os"), 1);
@@ -26231,8 +26231,36 @@ function escapeProperty(s) {
   return toCommandValue(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A").replace(/:/g, "%3A").replace(/,/g, "%2C");
 }
 
+// ../../node_modules/.pnpm/@actions+core@3.0.1/node_modules/@actions/core/lib/file-command.js
+var crypto = __toESM(require("crypto"), 1);
+var fs = __toESM(require("fs"), 1);
+var os2 = __toESM(require("os"), 1);
+function issueFileCommand(command, message) {
+  const filePath = process.env[`GITHUB_${command}`];
+  if (!filePath) {
+    throw new Error(`Unable to find environment variable for file command ${command}`);
+  }
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Missing file at path: ${filePath}`);
+  }
+  fs.appendFileSync(filePath, `${toCommandValue(message)}${os2.EOL}`, {
+    encoding: "utf8"
+  });
+}
+function prepareKeyValueMessage(key, value) {
+  const delimiter = `ghadelimiter_${crypto.randomUUID()}`;
+  const convertedValue = toCommandValue(value);
+  if (key.includes(delimiter)) {
+    throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
+  }
+  if (convertedValue.includes(delimiter)) {
+    throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
+  }
+  return `${key}<<${delimiter}${os2.EOL}${convertedValue}${os2.EOL}${delimiter}`;
+}
+
 // ../../node_modules/.pnpm/@actions+core@3.0.1/node_modules/@actions/core/lib/core.js
-var os3 = __toESM(require("os"), 1);
+var os4 = __toESM(require("os"), 1);
 
 // ../../node_modules/.pnpm/@actions+http-client@4.0.1/node_modules/@actions/http-client/lib/index.js
 var tunnel = __toESM(require_tunnel2(), 1);
@@ -26578,10 +26606,10 @@ var summary = _summary;
 var import_os2 = __toESM(require("os"), 1);
 
 // ../../node_modules/.pnpm/@actions+io@3.0.2/node_modules/@actions/io/lib/io-util.js
-var fs = __toESM(require("fs"), 1);
-var { chmod, copyFile, lstat, mkdir, open, readdir, rename, rm, rmdir, stat, symlink, unlink } = fs.promises;
+var fs2 = __toESM(require("fs"), 1);
+var { chmod, copyFile, lstat, mkdir, open, readdir, rename, rm, rmdir, stat, symlink, unlink } = fs2.promises;
 var IS_WINDOWS = process.platform === "win32";
-var READONLY = fs.constants.O_RDONLY;
+var READONLY = fs2.constants.O_RDONLY;
 
 // ../../node_modules/.pnpm/@actions+exec@3.0.0/node_modules/@actions/exec/lib/toolrunner.js
 var IS_WINDOWS2 = process.platform === "win32";
@@ -26617,6 +26645,14 @@ function getBooleanInput(name, options) {
   throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}
 Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
 }
+function setOutput(name, value) {
+  const filePath = process.env["GITHUB_OUTPUT"] || "";
+  if (filePath) {
+    return issueFileCommand("OUTPUT", prepareKeyValueMessage(name, value));
+  }
+  process.stdout.write(os4.EOL);
+  issueCommand("set-output", { name }, toCommandValue(value));
+}
 function setFailed(message) {
   process.exitCode = ExitCode.Failure;
   error(message);
@@ -26625,13 +26661,25 @@ function error(message, properties = {}) {
   issueCommand("error", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
 }
 function info(message) {
-  process.stdout.write(message + os3.EOL);
+  process.stdout.write(message + os4.EOL);
 }
 function startGroup(name) {
   issue("group", name);
 }
 function endGroup() {
   issue("endgroup");
+}
+
+// ../core/dist/checks/types.js
+var severities = [
+  "critical",
+  "high",
+  "medium",
+  "low",
+  "info"
+];
+function isSeverity(value) {
+  return severities.includes(value);
 }
 
 // ../core/dist/config.js
@@ -28051,13 +28099,10 @@ function mapLevel(severity) {
   }
 }
 function createLocation(finding) {
-  if (!finding.file) {
-    return void 0;
-  }
   return {
     physicalLocation: {
       artifactLocation: {
-        uri: finding.file
+        uri: finding.file ?? "."
       },
       ...finding.line !== void 0 ? {
         region: {
@@ -28085,19 +28130,14 @@ function renderSarif(findings, config) {
       }
     ])).values()
   ];
-  const results = findings.map((finding) => {
-    const location = createLocation(finding);
-    return {
-      ruleId: finding.id,
-      level: mapLevel(finding.severity),
-      message: {
-        text: finding.description
-      },
-      ...location ? {
-        locations: [location]
-      } : {}
-    };
-  });
+  const results = findings.map((finding) => ({
+    ruleId: finding.id,
+    level: mapLevel(finding.severity),
+    message: {
+      text: finding.description
+    },
+    locations: [createLocation(finding)]
+  }));
   return JSON.stringify({
     version: "2.1.0",
     $schema: "https://json.schemastore.org/sarif-2.1.0.json",
@@ -28129,7 +28169,7 @@ function renderSarif(findings, config) {
 async function writeSummary(content) {
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
   if (!summaryPath) {
-    await fs2.writeFile("wreckcheck-summary.md", content, "utf8");
+    await fs3.writeFile("wreckcheck-summary.md", content, "utf8");
     info(
       "GitHub summary file not available. Written to wreckcheck-summary.md"
     );
@@ -28139,7 +28179,7 @@ async function writeSummary(content) {
 }
 async function writeSarif(content, workspace) {
   const sarifPath = process.env.WRECKCHECK_SARIF ?? `${workspace}/wreckcheck-results.sarif`;
-  await fs2.writeFile(sarifPath, content, "utf8");
+  await fs3.writeFile(sarifPath, content, "utf8");
   info(`SARIF written to ${sarifPath}`);
 }
 async function run() {
@@ -28147,7 +28187,12 @@ async function run() {
     const verifyInput = getInput("verify");
     const verify = verifyInput === "" ? false : getBooleanInput("verify");
     const workspace = process.env.GITHUB_WORKSPACE ?? process.cwd();
+    const failOn = getInput("fail-on");
     const config = await loadConfig(workspace);
+    if (!isSeverity(failOn)) {
+      throw new Error(`Invalid severity: ${failOn}`);
+    }
+    config.policy.failOn = failOn;
     startGroup("Running WreckCheck");
     const result = await scan(workspace, checks, {
       verify
@@ -28155,7 +28200,10 @@ async function run() {
     endGroup();
     const findings = result.findings;
     await writeSummary(renderGithubSummary(result));
+    const sarifPath = process.env.WRECKCHECK_SARIF ?? `${workspace}/wreckcheck-results.sarif`;
     await writeSarif(renderSarif(findings, config), workspace);
+    setOutput("sarif", sarifPath);
+    setOutput("findings", findings.length);
     startGroup("Findings");
     for (const finding of findings) {
       error(`${finding.title}: ${finding.description}`, {

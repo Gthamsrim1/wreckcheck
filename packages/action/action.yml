@@ -5,6 +5,10 @@
 name: WreckCheck
 description: Find what will wreck your release
 
+branding:
+  icon: shield
+  color: red
+
 inputs:
   fail-on:
     description: Minimum severity that fails CI
@@ -15,6 +19,13 @@ inputs:
     description: Run build, lint, and test verification
     required: false
     default: false
+
+outputs:
+  sarif:
+    description: Generated SARIF file path
+
+  findings:
+    description: Number of findings
 
 runs:
   using: node24
