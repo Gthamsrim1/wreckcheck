@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2026 Gautham Sriram All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
 import type {
 	Finding,
 	RiskLevel,
@@ -14,6 +20,12 @@ import pc from 'picocolors';
 
 const severityOrder: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
 
+/**
+ * Renders a severity as a coloured heading.
+ *
+ * @param severity - Severity to render.
+ * @returns The label, coloured by how urgent it is.
+ */
 function formatSeverity(severity: Severity): string {
 	switch (severity) {
 		case 'critical':
@@ -29,6 +41,15 @@ function formatSeverity(severity: Severity): string {
 	}
 }
 
+/**
+ * Renders one finding as an indented block.
+ *
+ * Location, package details, and recommendation are each included only when
+ * the finding carries them.
+ *
+ * @param finding - Finding to render.
+ * @returns The block, as newline-joined lines.
+ */
 function formatFinding(finding: Finding): string {
 	const location = finding.file
 		? `${finding.file}${finding.line ? `:${finding.line}` : ''}`
@@ -71,6 +92,12 @@ function formatFinding(finding: Finding): string {
 	return lines.join('\n');
 }
 
+/**
+ * Renders the release verdict as a coloured line.
+ *
+ * @param riskLevel - Risk level from {@link getRiskLevel}.
+ * @returns The verdict, coloured green, yellow, or red.
+ */
 function formatRiskLevel(riskLevel: RiskLevel): string {
 	switch (riskLevel) {
 		case 'safe':
@@ -87,6 +114,12 @@ function formatRiskLevel(riskLevel: RiskLevel): string {
 	}
 }
 
+/**
+ * Buckets findings by severity so they can be printed in sections.
+ *
+ * @param findings - Findings to group.
+ * @returns Findings keyed by severity, each bucket in its original order.
+ */
 function groupFindings(findings: Finding[]): Map<Severity, Finding[]> {
 	const groups = new Map<Severity, Finding[]>();
 
@@ -99,6 +132,12 @@ function groupFindings(findings: Finding[]): Map<Severity, Finding[]> {
 	return groups;
 }
 
+/**
+ * Renders the ship-readiness score, coloured by how good it is.
+ *
+ * @param score - Score from {@link calculateScore}.
+ * @returns The score as `n / 100`, in green, yellow, or red.
+ */
 function formatScore(score: number): string {
 	if (score >= 90) {
 		return pc.green(`${score} / 100`);
@@ -111,6 +150,18 @@ function formatScore(score: number): string {
 	return pc.red(`${score} / 100`);
 }
 
+/**
+ * Renders a full scan report for the terminal.
+ *
+ * The report leads with the project and its ship-readiness verdict, then lists
+ * active findings grouped by severity, most severe first. Findings the policy
+ * ignores are listed separately at the end rather than hidden, so a suppressed
+ * issue stays visible to whoever is reading.
+ *
+ * @param result - The scan to render.
+ * @param config - Config whose policy decides what is ignored.
+ * @returns The report, as newline-joined lines with ANSI colour.
+ */
 export function renderTerminal(
 	result: ScanResult,
 	config: WreckCheckConfig,

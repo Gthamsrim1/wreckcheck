@@ -1,0 +1,14 @@
+{
+	"$schema": "https://typedoc.org/schema.json",
+	"name": "WreckCheck",
+	"tsconfig": "./tsconfig.json",
+	"entryPointStrategy": "expand",
+	"entryPoints": [
+		"../core/src",
+		"../checks/src",
+		"../reporter/src",
+		"../cli/src",
+		"../action/src"
+	],
+	"json": "../../docs/.vitepress/data/api.json"
+}

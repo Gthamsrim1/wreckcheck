@@ -26993,9 +26993,21 @@ async function exists2(path) {
 }
 var goAdapter = {
   id: "go",
+  /**
+   * Detects a Go module by its go.mod.
+   *
+   * @param context - Project directory and details.
+   * @returns `true` when the project has a go.mod.
+   */
   async detect(context) {
     return exists2((0, import_node_path3.join)(context.rootDir, "go.mod"));
   },
+  /**
+   * Runs `go test ./...`, then `go vet ./...` only if the tests passed.
+   *
+   * @param context - Project directory and details.
+   * @returns The test result, plus the vet result when the tests passed.
+   */
   async run(context) {
     const results = [];
     const test = await runCommand("go", ["test", "./..."], {
@@ -27067,9 +27079,22 @@ function getCommand(manager, script) {
 }
 var npmAdapter = {
   id: "npm",
+  /**
+   * Detects a Node.js project by its package.json.
+   *
+   * @param context - Project directory and details.
+   * @returns `true` when the project has a package.json.
+   */
   async detect(context) {
     return await exists3((0, import_node_path4.join)(context.rootDir, "package.json"));
   },
+  /**
+   * Runs the lint, test, and build scripts the project actually defines.
+   *
+   * @param context - Project directory and details.
+   * @returns One result per script that ran, stopping after the first
+   * failure or timeout.
+   */
   async run(context) {
     const scripts = await readScripts(context.rootDir);
     const results = [];
@@ -27107,9 +27132,21 @@ async function exists4(path) {
 }
 var pythonAdapter = {
   id: "python",
+  /**
+   * Detects a Python project by its pyproject.toml or requirements.txt.
+   *
+   * @param context - Project directory and details.
+   * @returns `true` when either file is present.
+   */
   async detect(context) {
     return await exists4((0, import_node_path5.join)(context.rootDir, "pyproject.toml")) || await exists4((0, import_node_path5.join)(context.rootDir, "requirements.txt"));
   },
+  /**
+   * Runs pytest against the project.
+   *
+   * @param context - Project directory and details.
+   * @returns A single result for the pytest run.
+   */
   async run(context) {
     return [
       await runCommand("pytest", [], {
@@ -27133,9 +27170,21 @@ async function exists5(path) {
 }
 var rustAdapter = {
   id: "rust",
+  /**
+   * Detects a Cargo project by its Cargo.toml.
+   *
+   * @param context - Project directory and details.
+   * @returns `true` when the project has a Cargo.toml.
+   */
   async detect(context) {
     return exists5((0, import_node_path6.join)(context.rootDir, "Cargo.toml"));
   },
+  /**
+   * Runs `cargo test`, then `cargo clippy` only if the tests passed.
+   *
+   * @param context - Project directory and details.
+   * @returns The test result, plus the clippy result when the tests passed.
+   */
   async run(context) {
     const results = [];
     const test = await runCommand("cargo", ["test"], {
@@ -27188,6 +27237,13 @@ var buildCheck = {
   id: "build",
   name: "Build configuration",
   category: "build",
+  /**
+   * Reports the build, test, and lint scripts the project does not define.
+   *
+   * @param context - Project directory and details.
+   * @returns One finding per missing script, or an `error` result when the
+   * project has no package.json.
+   */
   async run(context) {
     const packageJson = await readPackageJson(context.rootDir);
     if (!packageJson) {
@@ -27338,6 +27394,13 @@ var dependenciesCheck = {
   id: "dependencies",
   name: "Dependency vulnerabilities",
   category: "dependencies",
+  /**
+   * Audits the project with npm or pnpm, whichever it uses.
+   *
+   * @param context - Project directory and details.
+   * @returns One finding per vulnerability, or none for yarn and bun
+   * projects, which are not audited yet.
+   */
   async run(context) {
     const start = performance.now();
     let findings = [];
@@ -27617,6 +27680,13 @@ var dockerCheck = {
   id: "docker",
   name: "Docker configuration",
   category: "docker",
+  /**
+   * Parses the Dockerfile and runs every Docker rule against it.
+   *
+   * @param context - Project directory and details.
+   * @returns The rules' combined findings, or an `error` result when the
+   * project has no Dockerfile.
+   */
   async run(context) {
     const dockerfilePath = (0, import_node_path11.join)(context.rootDir, "Dockerfile");
     const start = performance.now();
@@ -27704,6 +27774,13 @@ var environmentCheck = {
   id: "environment",
   name: "Environment configuration",
   category: "environment",
+  /**
+   * Reports a leaked or unprotected `.env`, and variables that
+   * `.env.example` documents but `.env` does not set.
+   *
+   * @param context - Project directory and details.
+   * @returns Findings for exposure and for incomplete configuration.
+   */
   async run(context) {
     const { rootDir } = context;
     const start = performance.now();
@@ -27865,6 +27942,12 @@ var secretsCheck = {
   id: "secrets",
   name: "Secret detection",
   category: "security",
+  /**
+   * Scans every eligible file in the project, concurrently.
+   *
+   * @param context - Project directory and details.
+   * @returns One finding per credential found, located by file and line.
+   */
   async run(context) {
     const files = await getFiles(context.rootDir);
     const start = performance.now();
@@ -27879,6 +27962,13 @@ var verificationCheck = {
   id: "verification",
   name: "Project verification",
   category: "verification",
+  /**
+   * Runs the project's verification commands and reports the failures.
+   *
+   * @param context - Project directory and details.
+   * @returns A finding per command that failed or timed out, plus every
+   * command result for reporters to display.
+   */
   async run(context) {
     const results = await runVerification(context);
     const start = performance.now();
@@ -28064,7 +28154,7 @@ async function run() {
     });
     endGroup();
     const findings = result.findings;
-    await writeSummary(renderGithubSummary(findings));
+    await writeSummary(renderGithubSummary(result));
     await writeSarif(renderSarif(findings, config), workspace);
     startGroup("Findings");
     for (const finding of findings) {

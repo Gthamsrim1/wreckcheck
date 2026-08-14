@@ -1,5 +1,20 @@
+/**
+ * Copyright (c) 2026 Gautham Sriram All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
 import type { ScanResult } from '@wreckcheck/core';
 
+/**
+ * Renders a scan as Markdown for a GitHub Actions job summary.
+ *
+ * Verification results come first as a pass/fail list, then every finding with
+ * its location and recommendation.
+ *
+ * @param result - The scan to render.
+ * @returns Markdown, ready to write to the step summary.
+ */
 export function renderGithubSummary(result: ScanResult): string {
 	const { findings, verification } = result;
 

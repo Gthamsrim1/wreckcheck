@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2026 Gautham Sriram All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
@@ -14,11 +20,20 @@ const validSeverities: Severity[] = [
 	'info',
 ];
 
+/** Resolved configuration for a scan. */
 export interface WreckCheckConfig {
+	/** Policy applied to the findings a scan produces. */
 	policy: Policy;
+	/** Absolute path of the config file that was loaded, if any was found. */
 	path?: string;
 }
 
+/**
+ * Narrows an unvalidated config value to a {@link Severity}.
+ *
+ * @param value - Raw value read from the config file.
+ * @returns The severity, or `undefined` when the value is not a known one.
+ */
 function validateSeverity(value: unknown): Severity | undefined {
 	if (
 		typeof value !== 'string' ||
@@ -30,6 +45,21 @@ function validateSeverity(value: unknown): Severity | undefined {
 	return value as Severity;
 }
 
+/**
+ * Reads and validates the WreckCheck config for a project.
+ *
+ * Settings may sit under a `policy` key or at the top level of the file. A
+ * missing or empty config file is not an error: the scan falls back to
+ * {@link DEFAULT_POLICY}. Malformed YAML and invalid values are errors, so a
+ * typo never silently weakens the policy.
+ *
+ * @param rootDir - Project directory to load the config from.
+ * @param customFile - Config path to use instead of `.wreckcheck.yml`,
+ * resolved relative to `rootDir`.
+ * @returns The resolved policy, plus the path of the file it came from.
+ * @throws Error If the file is not valid YAML, `failOn` is not a known
+ * severity, or `ignore` is not a list of finding IDs.
+ */
 export async function loadConfig(
 	rootDir: string,
 	customFile?: string,

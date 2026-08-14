@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2026 Gautham Sriram All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
 import { spawn } from 'node:child_process';
 
 import type { CommandResult } from './types.js';
@@ -6,12 +12,29 @@ const DEFAULT_TIMEOUT = 2 * 60 * 1000;
 const KILL_GRACE_PERIOD = 5000;
 const MAX_OUTPUT_LENGTH = 12000;
 
+/** How to run a single verification command. */
 interface RunCommandOptions {
+	/** Directory to run the command in. */
 	cwd: string;
+	/** The command as shown to the user. */
 	display: string;
+	/** Time limit in milliseconds. Defaults to two minutes. */
 	timeout?: number;
 }
 
+/**
+ * Runs a command and captures its output, without letting it hang the scan.
+ *
+ * The command is spawned without a shell, so arguments are never interpreted
+ * by one. On timeout the whole process group is sent SIGTERM and then SIGKILL
+ * after a grace period, so child processes cannot outlive the scan. This never
+ * rejects: a command that fails to start resolves with a `null` exit code.
+ *
+ * @param command - Executable to run.
+ * @param args - Arguments passed to the executable.
+ * @param options - Working directory, display name, and time limit.
+ * @returns The exit code, captured output, duration, and whether it timed out.
+ */
 export async function runCommand(
 	command: string,
 	args: string[],
@@ -105,6 +128,17 @@ export async function runCommand(
 	});
 }
 
+/**
+ * Terminates a spawned command along with anything it started.
+ *
+ * The command is detached on POSIX so it leads its own process group, which is
+ * signalled as a whole; killing only the direct child would leave test runners
+ * and dev servers behind. Windows has no process groups, so the child is
+ * signalled directly.
+ *
+ * @param child - The spawned process to terminate.
+ * @param force - Send SIGKILL instead of SIGTERM.
+ */
 function killProcessTree(child: ReturnType<typeof spawn>, force = false): void {
 	if (child.pid === undefined) {
 		return;
@@ -126,6 +160,16 @@ function killProcessTree(child: ReturnType<typeof spawn>, force = false): void {
 	}
 }
 
+/**
+ * Keeps command output small enough to put in a report.
+ *
+ * Output longer than the limit is cut from the middle, keeping the head and
+ * tail, since the useful parts of a failure are usually the command that ran
+ * and the error it ended with.
+ *
+ * @param output - Raw combined stdout and stderr.
+ * @returns The trimmed output, or `undefined` when the command printed nothing.
+ */
 function truncateOutput(output: string): string | undefined {
 	const trimmed = output.trim();
 

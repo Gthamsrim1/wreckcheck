@@ -1,3 +1,16 @@
+/**
+ * Copyright (c) 2026 Gautham Sriram All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
+/**
+ * Stable IDs for every finding WreckCheck can report.
+ *
+ * These strings are part of the tool's public contract: they appear in JSON
+ * and SARIF output and are what users list under `ignore` in `.wreckcheck.yml`,
+ * so an existing ID must not be renamed.
+ */
 export const findingIds = {
 	// Security
 	awsAccessKey: 'security:aws-access-key',

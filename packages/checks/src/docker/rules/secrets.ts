@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2026 Gautham Sriram All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
 import type { Finding } from '@wreckcheck/core';
 import { findingIds } from '@wreckcheck/core';
 
@@ -8,6 +14,17 @@ const SECRET_NAME_PATTERN =
 
 const SECRET_VALUE_PATTERN = /(?:^|=)\s*(['"]?)(?!\$\{?)[^\s'"]{8,}\1\s*$/;
 
+/**
+ * Flags secrets hard-coded into `ENV` and `ARG` instructions.
+ *
+ * An instruction is reported when its name looks like a credential and its
+ * value is a literal rather than a build argument or variable reference.
+ * Values are matched on shape alone, so a placeholder long enough to look real
+ * can still be reported.
+ *
+ * @param context - The parsed Dockerfile.
+ * @returns One finding per embedded secret, located by line.
+ */
 export const dockerSecretsRule: DockerRule = ({ instructions }) => {
 	const findings: Finding[] = [];
 

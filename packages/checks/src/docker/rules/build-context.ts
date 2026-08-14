@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2026 Gautham Sriram All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -14,6 +20,12 @@ const SENSITIVE_DOCKERIGNORE_PATTERNS = [
 	'node_modules',
 ];
 
+/**
+ * Reports whether a path exists.
+ *
+ * @param path - Absolute path to test.
+ * @returns `true` when the path is accessible.
+ */
 async function exists(path: string): Promise<boolean> {
 	try {
 		await access(path);
@@ -23,6 +35,16 @@ async function exists(path: string): Promise<boolean> {
 	}
 }
 
+/**
+ * Reports whether `.dockerignore` excludes a path.
+ *
+ * Matching covers the common ways the same path is written, plus the catch-all
+ * patterns that exclude everything by default.
+ *
+ * @param patterns - Patterns declared in `.dockerignore`.
+ * @param target - Path to test, such as `.env`.
+ * @returns `true` when a pattern excludes the path.
+ */
 function isExcluded(patterns: Set<string>, target: string): boolean {
 	return (
 		patterns.has(target) ||
@@ -33,6 +55,18 @@ function isExcluded(patterns: Set<string>, target: string): boolean {
 	);
 }
 
+/**
+ * Flags sensitive paths that a `COPY .` would pull into the image.
+ *
+ * The rule only applies to Dockerfiles that copy the build context: without a
+ * `COPY .`, what `.dockerignore` excludes does not affect the image. When one
+ * is present, a missing `.dockerignore` is reported on its own, since every
+ * sensitive path would follow from it.
+ *
+ * @param context - The parsed Dockerfile and the surrounding scan.
+ * @returns A finding for a missing `.dockerignore`, or one per sensitive path
+ * it fails to exclude.
+ */
 export const dockerBuildContextRule: DockerRule = async ({
 	scan,
 	instructions,

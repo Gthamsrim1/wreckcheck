@@ -1,0 +1,17 @@
+{
+	"name": "@wreckcheck/docs",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"api": "typedoc --options typedoc.json",
+		"docs": "pnpm run api"
+	},
+	"devDependencies": {
+		"@wreckcheck/checks": "workspace:*",
+		"@wreckcheck/core": "workspace:*",
+		"@wreckcheck/reporter": "workspace:*",
+		"typedoc": "^0.28.20",
+		"typescript": "5.9.3"
+	}
+}

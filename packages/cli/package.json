@@ -1,6 +1,7 @@
 {
 	"name": "wreckcheck",
-	"version": "0.2.0",
+	"version": "0.2.1",
+	"license": "BSD-3-Clause",
 	"description": "A release-readiness CLI for scanning projects for security, configuration, dependency, Docker, and build issues.",
 	"type": "module",
 	"files": [

@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2026 Gautham Sriram All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type {
@@ -12,6 +18,7 @@ import { getInstalledVersion } from './npm.js';
 
 const execFileAsync = promisify(execFile);
 
+/** A single entry from `npm audit --json`. */
 interface NpmVulnerability {
 	severity?: string;
 	isDirect?: boolean;
@@ -36,10 +43,12 @@ interface NpmVulnerability {
 	nodes?: string[];
 }
 
+/** The `npm audit --json` payload, keyed by package name. */
 interface NpmAuditResult {
 	vulnerabilities?: Record<string, NpmVulnerability>;
 }
 
+/** A single advisory from `pnpm audit --json`. */
 interface AuditVulnerability {
 	title?: string;
 	severity?: string;
@@ -48,10 +57,17 @@ interface AuditVulnerability {
 	fixAvailable?: boolean;
 }
 
+/** The `pnpm audit --json` payload, keyed by advisory ID. */
 interface PnpmAuditResult {
 	advisories?: Record<string, AuditVulnerability>;
 }
 
+/**
+ * Translates an audit severity into a WreckCheck one.
+ *
+ * @param severity - Severity string from the audit tool.
+ * @returns The matching severity, or `info` for anything unrecognised.
+ */
 function mapSeverity(severity: string | undefined): Severity {
 	switch (severity?.toLowerCase()) {
 		case 'critical':
@@ -68,6 +84,19 @@ function mapSeverity(severity: string | undefined): Severity {
 	}
 }
 
+/**
+ * Runs an audit command and returns whatever it printed.
+ *
+ * Audit tools exit non-zero when they find vulnerabilities, which is the
+ * interesting case, so a failed exit is not treated as an error and its output
+ * is still returned.
+ *
+ * @param command - Audit executable, such as `npm`.
+ * @param args - Arguments passed to the executable.
+ * @param rootDir - Project directory to audit.
+ * @returns The captured stdout, falling back to stderr, or `undefined` when
+ * the command produced nothing.
+ */
 async function runAudit(
 	command: string,
 	args: string[],
@@ -90,6 +119,17 @@ async function runAudit(
 	}
 }
 
+/**
+ * Turns `npm audit` output into findings.
+ *
+ * Each vulnerable package becomes one finding, enriched with the version the
+ * lockfile installs and the version that fixes it where npm reports one.
+ *
+ * @param output - Raw JSON printed by `npm audit --json`.
+ * @param rootDir - Project directory, used to resolve installed versions.
+ * @returns One finding per vulnerable package, or an empty array when the
+ * output is not valid JSON.
+ */
 async function parseNpmAudit(
 	output: string,
 	rootDir: string,
@@ -158,6 +198,16 @@ async function parseNpmAudit(
 	return findings;
 }
 
+/**
+ * Turns `pnpm audit` output into findings.
+ *
+ * pnpm reports advisories rather than packages, and does not say which version
+ * is installed, so these findings carry no package details.
+ *
+ * @param output - Raw JSON printed by `pnpm audit --json`.
+ * @returns One finding per advisory, or an empty array when the output is not
+ * valid JSON.
+ */
 function parsePnpmAudit(output: string): Finding[] {
 	let audit: PnpmAuditResult;
 
@@ -181,11 +231,24 @@ function parsePnpmAudit(output: string): Finding[] {
 	}));
 }
 
+/**
+ * Checks a project's dependencies for known vulnerabilities.
+ *
+ * The audit is delegated to the project's own package manager, so it reports
+ * exactly what that toolchain would.
+ */
 export const dependenciesCheck: Check = {
 	id: 'dependencies',
 	name: 'Dependency vulnerabilities',
 	category: 'dependencies',
 
+	/**
+	 * Audits the project with npm or pnpm, whichever it uses.
+	 *
+	 * @param context - Project directory and details.
+	 * @returns One finding per vulnerability, or none for yarn and bun
+	 * projects, which are not audited yet.
+	 */
 	async run(context: ScanContext): Promise<CheckResult> {
 		const start = performance.now();
 		let findings: Finding[] = [];

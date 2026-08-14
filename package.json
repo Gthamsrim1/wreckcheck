@@ -1,13 +1,17 @@
 {
 	"name": "wreckcheck-monorepo",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"private": true,
 	"description": "",
 	"main": "index.js",
 	"scripts": {
 		"test": "pnpm -r test",
-		"test:integration": "pnpm --filter @wreckcheck/cli test:integration",
+		"test:integration": "pnpm --filter wreckcheck test:integration",
 		"build": "pnpm -r build",
+		"docs:api": "pnpm --filter @wreckcheck/docs api",
+		"docs:dev": "pnpm docs:api && vitepress dev docs",
+		"docs:build": "pnpm docs:api && vitepress build docs",
+		"docs:preview": "vitepress preview docs",
 		"lint": "biome check .",
 		"format": "biome format --write .",
 		"format:check": "biome format . --check",
@@ -18,7 +22,7 @@
 	},
 	"keywords": [],
 	"author": "",
-	"license": "ISC",
+	"license": "BSD-3-Clause",
 	"devEngines": {
 		"packageManager": {
 			"name": "pnpm",
@@ -28,13 +32,16 @@
 	},
 	"type": "module",
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.7",
+		"@biomejs/biome": "^2.5.8",
 		"@types/node": "^26.2.0",
 		"husky": "^9.1.7",
+		"license-header": "0.0.1-security",
 		"lint-staged": "^17.3.0",
 		"shx": "^0.4.0",
-		"tsx": "^4.23.11",
+		"tsx": "^4.23.12",
 		"typescript": "^7.0.2",
+		"vite": "^8.2.1",
+		"vitepress": "^1.6.4",
 		"vitest": "^4.1.10"
 	}
 }

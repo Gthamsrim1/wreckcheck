@@ -1,9 +1,30 @@
+/**
+ * Copyright (c) 2026 Gautham Sriram All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
+/** A single instruction parsed out of a Dockerfile. */
 export interface DockerInstruction {
+	/** The keyword, such as `FROM` or `ENV`. */
 	instruction: string;
+	/** Everything after the keyword, with line continuations joined. */
 	value: string;
+	/** 1-based line the instruction starts on. */
 	line: number;
 }
 
+/**
+ * Parses a Dockerfile into instructions the rules can inspect.
+ *
+ * Comments and blank lines are dropped, and instructions split across lines
+ * with a trailing backslash are joined into one. The reported line is where
+ * the instruction started, so findings point at the keyword rather than the
+ * last line of a continuation.
+ *
+ * @param content - Raw contents of the Dockerfile.
+ * @returns The instructions, in file order.
+ */
 export function parseDockerfile(content: string): DockerInstruction[] {
 	const instructions: DockerInstruction[] = [];
 

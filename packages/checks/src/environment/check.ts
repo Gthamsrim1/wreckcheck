@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2026 Gautham Sriram All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
 import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -12,6 +18,12 @@ import { findingIds } from '@wreckcheck/core';
 import { isIgnored, isTracked } from './git.js';
 import { parseEnvFile } from './parser.js';
 
+/**
+ * Reports whether a path exists.
+ *
+ * @param filePath - Absolute path to test.
+ * @returns `true` when the path is accessible.
+ */
 async function exists(filePath: string): Promise<boolean> {
 	try {
 		await access(filePath);
@@ -21,11 +33,25 @@ async function exists(filePath: string): Promise<boolean> {
 	}
 }
 
+/**
+ * Checks that environment files are kept out of Git and are complete.
+ *
+ * A committed `.env` is treated as critical, since its contents are already
+ * exposed; a `.env` that merely lacks an ignore rule is one commit away from
+ * the same outcome.
+ */
 export const environmentCheck: Check = {
 	id: 'environment',
 	name: 'Environment configuration',
 	category: 'environment',
 
+	/**
+	 * Reports a leaked or unprotected `.env`, and variables that
+	 * `.env.example` documents but `.env` does not set.
+	 *
+	 * @param context - Project directory and details.
+	 * @returns Findings for exposure and for incomplete configuration.
+	 */
 	async run(context: ScanContext): Promise<CheckResult> {
 		const { rootDir } = context;
 		const start = performance.now();

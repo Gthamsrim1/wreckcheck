@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2026 Gautham Sriram All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -9,13 +15,25 @@ import type {
 } from '@wreckcheck/core';
 import { createFingerprint, findingIds } from '@wreckcheck/core';
 
+/** One kind of credential the scanner recognises. */
 interface SecretPattern {
+	/** Short identifier, such as `aws-access-key`. */
 	id: string;
+	/** Human-readable name used in the finding title. */
 	name: string;
+	/** Global pattern matching the credential format. */
 	pattern: RegExp;
+	/** Severity reported when the pattern matches. */
 	severity: Finding['severity'];
 }
 
+/**
+ * Credential formats the scanner looks for.
+ *
+ * The patterns match issuer-specific shapes rather than anything resembling a
+ * high-entropy string, which keeps false positives rare enough for every match
+ * to be worth treating as critical.
+ */
 const SECRET_PATTERNS: SecretPattern[] = [
 	{
 		id: 'aws-access-key',
@@ -68,6 +86,18 @@ const IGNORED_DIRECTORIES = new Set([
 
 const MAX_FILE_SIZE = 1024 * 1024;
 
+/**
+ * Collects the files worth scanning for secrets.
+ *
+ * Dependency, build, and VCS directories are skipped, and files above the size
+ * limit are left out, since they are almost always assets or bundles rather
+ * than hand-written source.
+ *
+ * @param rootDir - Project directory being scanned.
+ * @param directory - Directory to walk; defaults to the project root and is
+ * used for recursion.
+ * @returns Absolute paths of every file to scan.
+ */
 async function getFiles(
 	rootDir: string,
 	directory = rootDir,
@@ -103,6 +133,18 @@ async function getFiles(
 	return files;
 }
 
+/**
+ * Scans one file for every known credential format.
+ *
+ * Findings carry a file and line so they can be located, and a fingerprint so
+ * the same credential is recognisable across runs. The matched value itself is
+ * never included in the finding.
+ *
+ * @param rootDir - Project directory, used to make paths project-relative.
+ * @param filePath - Absolute path of the file to scan.
+ * @returns One finding per match, or an empty array when the file cannot be
+ * read as text.
+ */
 async function scanFile(rootDir: string, filePath: string): Promise<Finding[]> {
 	let content: string;
 
@@ -146,11 +188,23 @@ async function scanFile(rootDir: string, filePath: string): Promise<Finding[]> {
 	return findings;
 }
 
+/**
+ * Checks the project's files for hard-coded credentials.
+ *
+ * This scans the working tree as it is on disk, not Git history, so a secret
+ * that was committed and later removed is not reported here.
+ */
 export const secretsCheck: Check = {
 	id: 'secrets',
 	name: 'Secret detection',
 	category: 'security',
 
+	/**
+	 * Scans every eligible file in the project, concurrently.
+	 *
+	 * @param context - Project directory and details.
+	 * @returns One finding per credential found, located by file and line.
+	 */
 	async run(context: ScanContext): Promise<CheckResult> {
 		const files = await getFiles(context.rootDir);
 		const start = performance.now();

@@ -1,7 +1,23 @@
+/**
+ * Copyright (c) 2026 Gautham Sriram All rights reserved.
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file.
+ */
+
 import type { Finding } from '@wreckcheck/core';
 import { findingIds } from '@wreckcheck/core';
 import type { DockerRule } from './types.js';
 
+/**
+ * Flags `FROM` instructions that do not pin the base image.
+ *
+ * A missing tag, `latest`, or a partial version like `20` or `20.1` all resolve
+ * to something different over time, so the image that passes review is not
+ * necessarily the one that ships. Digest-pinned images are always accepted.
+ *
+ * @param context - The parsed Dockerfile.
+ * @returns One finding per floating base image, located by line.
+ */
 export const dockerBaseImageRule: DockerRule = ({ instructions }) => {
 	const findings: Finding[] = [];
 
