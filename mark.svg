@@ -1,0 +1,6 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title">
+  <title id="title">WreckCheck</title>
+  <rect width="64" height="64" rx="16" fill="#17336D"/>
+  <path d="M15 16h8l5.8 22.5L35.1 16h7.8l6.1 22.5L54.7 16H63L52.2 49H45l-6-21.5L33 49h-7.3L15 16Z" fill="#F6F9FF"/>
+  <path d="M15 16h8l5.8 22.5L35.1 16h7.8l6.1 22.5L54.7 16" stroke="#75A7FF" stroke-width="2" stroke-linejoin="round"/>
+</svg>
