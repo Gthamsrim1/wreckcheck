@@ -6,8 +6,22 @@
 
 import type { CommandResult } from '../verification/types.js';
 
+/** Array to determine severity. */
+export const severities = [
+	'critical',
+	'high',
+	'medium',
+	'low',
+	'info',
+] as const;
+
 /** How damaging a finding is if it ships. */
-export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
+export type Severity = (typeof severities)[number];
+
+/** Function to verify and typecast yaml files */
+export function isSeverity(value: string): value is Severity {
+	return severities.includes(value as Severity);
+}
 
 /** The area of the project a finding belongs to. */
 export type Category =

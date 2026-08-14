@@ -18,7 +18,7 @@ import * as fs from 'node:fs/promises';
 import * as core from '@actions/core';
 
 import { checks } from '@wreckcheck/checks';
-import { loadConfig, scan, shouldFail } from '@wreckcheck/core';
+import { isSeverity, loadConfig, scan, shouldFail } from '@wreckcheck/core';
 import { renderGithubSummary, renderSarif } from '@wreckcheck/reporter';
 
 /**
@@ -75,7 +75,15 @@ async function run(): Promise<void> {
 
 		const workspace = process.env.GITHUB_WORKSPACE ?? process.cwd();
 
+		const failOn = core.getInput('fail-on');
+
 		const config = await loadConfig(workspace);
+
+		if (!isSeverity(failOn)) {
+			throw new Error(`Invalid severity: ${failOn}`);
+		}
+
+		config.policy.failOn = failOn;
 
 		core.startGroup('Running WreckCheck');
 
@@ -89,7 +97,13 @@ async function run(): Promise<void> {
 
 		await writeSummary(renderGithubSummary(result));
 
+		const sarifPath =
+			process.env.WRECKCHECK_SARIF ?? `${workspace}/wreckcheck-results.sarif`;
+
 		await writeSarif(renderSarif(findings, config), workspace);
+
+		core.setOutput('sarif', sarifPath);
+		core.setOutput('findings', findings.length);
 
 		core.startGroup('Findings');
 
